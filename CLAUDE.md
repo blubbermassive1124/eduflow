@@ -2,15 +2,16 @@
 
 ## 專案概要
 - EduFlow 是一套學校教師用的試卷與題庫管理系統
-- 目前版本 v4.2+，單一 index.html 架構
+- 目前版本 v4.3，單一 index.html 架構
 - 使用者 Rick 非工程師，請用中文解釋你做了什麼，不要只丟程式碼
 - 所有改動需要 Rick 同意後再動
 
 ## 技術架構
-- 前端：單一 index.html（所有功能整合，3000+ 行）
+- 前端：單一 index.html（所有功能整合，9000+ 行）
 - 後端：Supabase（auth + PostgreSQL + JSONB 欄位）
-- AI 代理：netlify/functions/claude.js（serverless proxy 呼叫 Claude API）
-- 部署：Netlify（自動偵測 GitHub push）
+- AI 呼叫：**前端直連架構**，瀏覽器直接 fetch `https://api.anthropic.com/v1/messages`，沒有 serverless proxy
+- API Key 儲存：每位使用者把自己的 Claude API Key 存在 Supabase `profiles.api_keys` JSONB 欄位，屬性名 `claudeKey`
+- 部署：Netlify（自動偵測 GitHub push，純靜態托管）
 - 網址：https://rickstests.netlify.app
 
 ## 編輯紀律（非常重要）
