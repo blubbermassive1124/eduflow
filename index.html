@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="zh-TW">
+<html lang="zh-TW" data-theme="dark">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -155,16 +155,16 @@
   --e-s: var(--success-soft); --r-s: var(--danger-soft);
   --a-s: var(--warning-soft); --v-s: var(--accent-soft);
   /* Text — 護眼高對比 */
-  --text:   #eae7e2;   /* 主文字：亮暖白 */
+  --text:   var(--ink);   /* 主文字：亮暖白 */
   --text-2: var(--accent-soft);   /* 次強調：明亮冰藍 */
-  --text-m: #a5a29f;   /* 次要文字：中灰（提升可讀性）*/
-  --text-l: #757371;   /* 說明文字：灰（提升可讀性）*/
+  --text-m: var(--muted);   /* 次要文字：中灰（提升可讀性）*/
+  --text-l: var(--faint);   /* 說明文字：灰（提升可讀性）*/
   --radius: 18px; --radius-lg: 26px; --radius-xl: 36px;
 }
 
 *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
 html{scroll-behavior:smooth}
-body{font-family:var(--font-ui);background:#0a1628;color:var(--text);min-height:100vh;overflow-x:hidden}
+body{font-family:var(--font-ui);background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
 
 /* ── 背景：圖片層 + 遮罩層 ── */
 #math-photo-bg{
