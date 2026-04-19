@@ -1,0 +1,207 @@
+<!doctype html>
+<html lang="zh-TW" data-theme="dark">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>EduFlow · 登入頁 · Dark</title>
+
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>EduFlow — Screens v1</title>
+
+<!-- Fonts -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,500;8..60,600&family=Noto+Sans+TC:wght@400;500;600;700&family=Noto+Serif+TC:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+<!-- KaTeX -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+
+<!-- React + Babel -->
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+<style>
+:root {
+  /* Light mode */
+  --bg: #FCFBF8;
+  --surface: #F7F5F1;
+  --raised: #FFFFFF;
+  --border: #E8E5E0;
+  --border-strong: #D6D2CB;
+  --ink: #1A1918;
+  --muted: #6B6862;
+  --faint: #A39D95;
+
+  --accent: #0E4F5E;
+  --accent-hover: #093E4B;
+  --accent-soft: rgba(14, 79, 94, 0.08);
+
+  --success: #10B981;
+  --success-soft: rgba(16, 185, 129, 0.1);
+  --danger: #DC2626;
+  --danger-soft: rgba(220, 38, 38, 0.08);
+  --warning: #D97706;
+  --warning-soft: rgba(217, 119, 6, 0.1);
+
+  --font-ui: 'Inter', 'Noto Sans TC', -apple-system, sans-serif;
+  --font-body: 'Source Serif 4', 'Noto Serif TC', Georgia, serif;
+  --font-display: 'Inter', 'Noto Sans TC', sans-serif;
+  --font-mono: 'JetBrains Mono', 'SF Mono', Consolas, monospace;
+
+  --t-fast: 120ms cubic-bezier(0.2, 0, 0.2, 1);
+  --t-med: 240ms cubic-bezier(0.2, 0, 0.2, 1);
+  --t-slow: 480ms cubic-bezier(0.2, 0, 0.2, 1);
+
+  --r-sm: 4px;
+  --r-md: 6px;
+  --r-lg: 10px;
+
+  --shadow-xs: 0 1px 2px rgba(0,0,0,0.04);
+  --shadow-sm: 0 2px 8px rgba(0,0,0,0.06);
+  --shadow-md: 0 8px 24px rgba(0,0,0,0.08);
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; background: #f0eee9; }
+body {
+  font-family: var(--font-ui);
+  color: var(--ink);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* KaTeX size tuning — match Source Serif body size */
+.katex { font-size: 1em; }
+
+/* Micro utility classes used across screens */
+.ef-micro {
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+  font-family: var(--font-ui);
+}
+
+/* Thin ring for focused inputs */
+.ef-input:focus { outline: none; border-bottom-color: var(--accent); }
+
+/* Buttons — scoped to .ef- to avoid global leak */
+.ef-btn {
+  font-family: var(--font-ui);
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  height: 36px;
+  padding: 0 16px;
+  border-radius: var(--r-sm);
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: all var(--t-fast);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+.ef-btn-primary { background: var(--accent); color: #fff; }
+.ef-btn-primary:hover { background: var(--accent-hover); }
+.ef-btn-secondary { background: transparent; color: var(--ink); border-color: var(--border-strong); }
+.ef-btn-secondary:hover { border-color: var(--ink); }
+.ef-btn-ghost { background: transparent; color: var(--muted); }
+.ef-btn-ghost:hover { background: var(--surface); color: var(--ink); }
+
+/* Tweaks panel */
+.tweaks-panel {
+  position: fixed; right: 20px; bottom: 20px;
+  background: #fff; border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  padding: 16px; width: 260px;
+  box-shadow: var(--shadow-md);
+  font-family: var(--font-ui);
+  z-index: 1000;
+  font-size: 13px;
+}
+.tweaks-panel .tw-title {
+  font-size: 11px; font-weight: 500; letter-spacing: 0.14em;
+  text-transform: uppercase; color: var(--muted); margin-bottom: 12px;
+}
+.tweaks-panel label { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; color: var(--ink); }
+.tweaks-panel select, .tweaks-panel input[type="text"] {
+  font-family: var(--font-ui); font-size: 12px;
+  border: 1px solid var(--border-strong); border-radius: 4px;
+  padding: 4px 8px; background: #fff; color: var(--ink);
+}
+</style>
+
+
+<style>
+[data-theme="dark"] {
+  --bg: #0E0D0B;
+  --surface: #181613;
+  --raised: #1C1A16;
+  --border: #2A2724;
+  --border-strong: #3D3934;
+  --ink: #F5F3EF;
+  --muted: #A39D95;
+  --faint: #6B6862;
+  --accent: #5EAFC1;
+  --accent-hover: #78BECE;
+  --accent-soft: rgba(94, 175, 193, 0.12);
+  --success: #34D399;
+  --success-soft: rgba(52, 211, 153, 0.12);
+  --danger: #F87171;
+  --danger-soft: rgba(248, 113, 113, 0.1);
+  --warning: #FBBF24;
+  --warning-soft: rgba(251, 191, 36, 0.12);
+}
+[data-theme="dark"] body, [data-theme="dark"] { background: #1a1816 !important; }
+</style>
+
+<style>
+  html, body { background: #1a1816 !important; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel" src="screens/shared.jsx"></script>
+<script type="text/babel" src="screens/login.jsx"></script>
+<script type="text/babel">
+  // Custom mount with dark surround
+  function DarkFit({ Component, w, h }) {
+    const [scale, setScale] = React.useState(1);
+    React.useEffect(() => {
+      const on = () => setScale(Math.min(window.innerWidth / w, window.innerHeight / h, 1));
+      on();
+      window.addEventListener('resize', on);
+      return () => window.removeEventListener('resize', on);
+    }, []);
+    return (
+      <div style={{
+        width: '100vw', height: '100vh', overflow: 'hidden',
+        background: '#1a1816',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+      }}>
+        <div data-theme="dark" style={{
+          width: w, height: h,
+          transform: `scale(${scale})`, transformOrigin: 'center center',
+          boxShadow: '0 2px 8px rgba(0,0,0,0.4), 0 16px 48px rgba(0,0,0,0.4)',
+        }}>
+          <Component />
+        </div>
+      </div>
+    );
+  }
+  (function tryMount(){
+    if (window.LoginScreen) {
+      ReactDOM.createRoot(document.getElementById('root')).render(
+        <DarkFit Component={window.LoginScreen} w={1280} h={800} />
+      );
+    } else setTimeout(tryMount, 30);
+  })();
+</script>
+</body>
+</html>
