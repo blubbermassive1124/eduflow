@@ -290,30 +290,9 @@ tbody tr:hover td{background:rgba(94,175,193,.025)}
 .sc{background:var(--raised);
   border:1px solid var(--border);box-shadow:none;
   border-radius:var(--r-lg);padding:18px;position:relative;overflow:visible;
-  transition:transform 220ms cubic-bezier(0.2, 0, 0.2, 1), box-shadow 220ms cubic-bezier(0.2, 0, 0.2, 1)}
-.sc::before{content:'';position:absolute;inset:0;border-radius:var(--r-lg);padding:1px;
-  background:conic-gradient(from 225deg at 30% 30%,
-    rgba(255,255,255,0.18) 0deg,
-    rgba(255,255,255,0.08) 90deg,
-    rgba(255,255,255,0.03) 180deg,
-    rgba(255,255,255,0.09) 270deg,
-    rgba(255,255,255,0.18) 360deg);
-  -webkit-mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);
-  -webkit-mask-composite:xor;
-          mask-composite:exclude;
-  pointer-events:none;z-index:1;
-  transition:background 220ms cubic-bezier(0.2, 0, 0.2, 1)}
-.sc::after{content:'';position:absolute;inset:0;border-radius:var(--r-lg);
-  background:linear-gradient(135deg, rgba(255,255,255,0.025) 0%, transparent 50%);
-  pointer-events:none;z-index:0}
+  transition:border-color var(--t-fast), box-shadow var(--t-fast)}
 .sc>*{position:relative;z-index:2}
-.sc:hover{box-shadow:var(--shadow-md);background:var(--raised);transform:translateY(-2px)}
-.sc:hover::before{background:conic-gradient(from 225deg at 30% 30%,
-    rgba(94,175,193,0.48) 0deg,
-    rgba(94,175,193,0.22) 90deg,
-    rgba(94,175,193,0.08) 180deg,
-    rgba(94,175,193,0.22) 270deg,
-    rgba(94,175,193,0.48) 360deg)}
+.sc:hover{border-color:var(--muted);box-shadow:var(--shadow-md)}
 .sc .bar{position:absolute;top:2px;left:4px;right:4px;height:3px;border-radius:2px;z-index:2}
 .sc-ico{width:40px;height:40px;border-radius:var(--r-lg);display:flex;align-items:center;justify-content:center;
   margin-bottom:12px;font-size:1rem}
@@ -678,9 +657,8 @@ hr.dv{border:none;border-top:1px solid rgba(94,175,193,.1);margin:14px 0}
 }
 .sc > * { position: relative; z-index: 2; }
 .sc:hover {
-  transform: translateY(-2px);
+  border-color: var(--muted);
   box-shadow: var(--shadow-md);
-  background: var(--raised);
 }
 
 /* ── Navigation bar ── */
@@ -932,7 +910,7 @@ hr.dv{border:none;border-top:1px solid rgba(94,175,193,.1);margin:14px 0}
   position:relative;overflow:visible;
   transition:transform 220ms cubic-bezier(0.2, 0, 0.2, 1), box-shadow 220ms cubic-bezier(0.2, 0, 0.2, 1)}
 .sc>*{position:relative;z-index:2}
-.sc:hover{background:var(--raised);box-shadow:var(--shadow-md);transform:translateY(-2px)}
+.sc:hover{border-color:var(--muted);box-shadow:var(--shadow-md)}
 
 /* ── topnav ── */
 .topnav{position:sticky;top:0;z-index:100;
