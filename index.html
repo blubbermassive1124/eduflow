@@ -1691,19 +1691,19 @@ a { color: var(--indigo); }
         <div class="sh" id="s-welcome">歡迎回來 👋</div>
         <div class="ss" id="s-welcome-sub">載入中...</div>
         <div class="sg" id="s-stats">
-          <div class="sc"><div class="bar" style="background:linear-gradient(90deg,var(--indigo),var(--violet))"></div>
+          <div class="sc"><div class="bar" style="background:var(--accent)"></div>
             <div class="sc-ico si-i"><i class="fa fa-star"></i></div>
             <div class="sc-v" id="st-avg">—</div><div class="sc-l">平均分數</div>
             <div class="sc-c up" id="st-avg-c"></div></div>
-          <div class="sc"><div class="bar" style="background:linear-gradient(90deg,var(--emerald),var(--teal))"></div>
+          <div class="sc"><div class="bar" style="background:var(--success)"></div>
             <div class="sc-ico si-e"><i class="fa fa-check-circle"></i></div>
             <div class="sc-v" id="st-done">—</div><div class="sc-l">已完成題數</div>
             <div class="sc-c up" id="st-done-c"></div></div>
-          <div class="sc"><div class="bar" style="background:linear-gradient(90deg,var(--amber),var(--orange))"></div>
+          <div class="sc"><div class="bar" style="background:var(--warning)"></div>
             <div class="sc-ico si-a"><i class="fa fa-fire"></i></div>
             <div class="sc-v" id="st-streak">—</div><div class="sc-l">連續學習天數</div>
             <div class="sc-c up">繼續保持！</div></div>
-          <div class="sc"><div class="bar" style="background:linear-gradient(90deg,var(--violet),var(--purple))"></div>
+          <div class="sc"><div class="bar" style="background:var(--accent)"></div>
             <div class="sc-ico si-v"><i class="fa fa-trophy"></i></div>
             <div class="sc-v" id="st-rank">—</div><div class="sc-l">班級排名</div>
             <div class="sc-c up" id="st-rank-c"></div></div>
@@ -1974,7 +1974,7 @@ a { color: var(--indigo); }
     <div class="nav-r">
       <button class="btn btn-g btn-ico" onclick="toggleNotif()"><i class="fa fa-bell"></i></button>
       <div class="user-dd-wrap">
-        <div class="nav-av" id="t-avatar" style="background:linear-gradient(135deg,var(--amber),var(--orange))" onclick="toggleUserDD(event)">師</div>
+        <div class="nav-av" id="t-avatar" style="background:var(--warning)" onclick="toggleUserDD(event)">師</div>
       </div>
     </div>
   </nav>
@@ -2010,22 +2010,22 @@ a { color: var(--indigo); }
         <div class="sh" id="t-welcome">教師儀表板</div>
         <div class="ss" id="t-welcome-sub">載入班級數據中...</div>
         <div class="sg">
-          <div class="sc"><div class="bar" style="background:linear-gradient(90deg,var(--indigo),var(--sky))"></div>
+          <div class="sc"><div class="bar" style="background:var(--accent)"></div>
             <div class="sc-ico si-i"><i class="fa fa-users"></i></div>
             <div class="sc-v" id="t-st-count">—</div><div class="sc-l">班級學生數</div></div>
-          <div class="sc"><div class="bar" style="background:linear-gradient(90deg,var(--emerald),var(--teal))"></div>
+          <div class="sc"><div class="bar" style="background:var(--success)"></div>
             <div class="sc-ico si-e"><i class="fa fa-check-double"></i></div>
             <div class="sc-v" id="t-comp-rate">—</div><div class="sc-l">本週完成率</div>
             <div class="sc-c up" id="t-comp-c"></div></div>
-          <div class="sc"><div class="bar" style="background:linear-gradient(90deg,var(--amber),var(--orange))"></div>
+          <div class="sc"><div class="bar" style="background:var(--warning)"></div>
             <div class="sc-ico si-a"><i class="fa fa-chart-line"></i></div>
             <div class="sc-v" id="t-avg-score">—</div><div class="sc-l">班級平均分</div>
             <div class="sc-c up" id="t-avg-c"></div></div>
-          <div class="sc"><div class="bar" style="background:linear-gradient(90deg,var(--rose),var(--red))"></div>
+          <div class="sc"><div class="bar" style="background:var(--danger)"></div>
             <div class="sc-ico si-r"><i class="fa fa-triangle-exclamation"></i></div>
             <div class="sc-v" id="t-remedy-count">—</div><div class="sc-l">待補救學生</div>
             <div class="sc-c dn">低於 60 分</div></div>
-          <div class="sc"><div class="bar" style="background:linear-gradient(90deg,var(--violet),var(--purple))"></div>
+          <div class="sc"><div class="bar" style="background:var(--accent)"></div>
             <div class="sc-ico si-v"><i class="fa fa-database"></i></div>
             <div class="sc-v" id="t-q-count">—</div><div class="sc-l">題庫總題數</div></div>
         </div>
@@ -2265,7 +2265,7 @@ a { color: var(--indigo); }
             </div>
           </div>
           <!-- 批次操作列 -->
-          <div id="student-batch-bar" style="display:none;padding:10px 14px;background:linear-gradient(135deg,rgba(94,175,193,.08),rgba(139,92,246,.08));border:1px solid rgba(94,175,193,.18);border-radius:var(--r-lg);margin-bottom:12px;align-items:center;gap:10px;flex-wrap:wrap">
+          <div id="student-batch-bar" style="display:none;padding:10px 14px;background:var(--accent-soft);border:1px solid var(--border);border-radius:var(--r-lg);margin-bottom:12px;align-items:center;gap:10px;flex-wrap:wrap">
             <span style="font-size:.82rem;font-weight:700;color:var(--indigo)"><i class="fa fa-check-double"></i> 已選 <span id="student-sel-count">0</span> 名學生</span>
             <div style="margin-left:auto;display:flex;gap:6px">
               <select class="inp" id="batch-class-select" style="width:140px;padding:5px 10px;font-size:.8rem"><option value="">選擇班級...</option></select>
@@ -2706,7 +2706,7 @@ a { color: var(--indigo); }
               <button class="btn btn-p btn-sm" onclick="openAddStudent()"><i class="fa fa-user-plus"></i> 新增</button>
             </div>
           </div>
-          <div id="admin-student-batch-bar" style="display:none;padding:10px 14px;background:linear-gradient(135deg,rgba(244,63,94,.08),rgba(139,92,246,.08));border:1px solid rgba(244,63,94,.18);border-radius:var(--r-lg);margin-bottom:12px;align-items:center;gap:10px;flex-wrap:wrap">
+          <div id="admin-student-batch-bar" style="display:none;padding:10px 14px;background:var(--danger-soft);border:1px solid var(--border);border-radius:var(--r-lg);margin-bottom:12px;align-items:center;gap:10px;flex-wrap:wrap">
             <span style="font-size:.82rem;font-weight:700;color:var(--rose)"><i class="fa fa-check-double"></i> 已選 <span id="admin-student-sel-count">0</span> 名</span>
             <div style="margin-left:auto;display:flex;gap:6px">
               <button class="btn btn-r btn-sm" onclick="adminBatchDelete('student')"><i class="fa fa-trash"></i> 批次刪除</button>
@@ -2730,7 +2730,7 @@ a { color: var(--indigo); }
         <div class="card mb4">
           <div class="ch mb4">角色權限說明</div>
           <div class="g3" style="gap:14px">
-            <div style="padding:16px;background:linear-gradient(135deg,rgba(244,63,94,.06),rgba(139,92,246,.06));border:1px solid rgba(244,63,94,.15);border-radius:var(--r-lg)">
+            <div style="padding:16px;background:var(--danger-soft);border:1px solid var(--border);border-radius:var(--r-lg)">
               <div style="font-size:1.3rem;margin-bottom:6px">🛡️</div>
               <div style="font-weight:700;margin-bottom:4px;color:var(--rose)">系統管理員</div>
               <div style="font-size:.78rem;color:var(--text-m);line-height:1.7">可存取全系統、管理所有帳號、重設密碼、修改角色、檢視所有數據</div>
@@ -4151,8 +4151,8 @@ function updateAIQuotaDisplay() {
   limitEl.textContent = AI_FREE_DAILY_LIMIT;
   const pct = Math.min(100, Math.round((usage.count / AI_FREE_DAILY_LIMIT) * 100));
   barEl.style.width = pct + '%';
-  barEl.style.background = pct >= 90 ? 'linear-gradient(90deg,var(--rose),var(--orange))' :
-    pct >= 60 ? 'linear-gradient(90deg,var(--amber),var(--orange))' : 'linear-gradient(90deg,var(--teal),var(--indigo))';
+  barEl.style.background = pct >= 90 ? 'var(--danger)' :
+    pct >= 60 ? 'var(--warning)' : 'var(--accent)';
 }
 
 // 判斷是否需要用自己的 key（重度使用場景）
@@ -6274,7 +6274,7 @@ async function loadActiveAssignments() {
         const improve = last - first;
         const reached = last >= 60;
         return `<tr class="remedy-row">
-          <td><div class="fx ai-c g3x"><div class="av" style="background:linear-gradient(135deg,var(--indigo),var(--sky))">${(d.name)[0]}</div>${d.name}</div></td>
+          <td><div class="fx ai-c g3x"><div class="av" style="background:var(--accent)">${(d.name)[0]}</div>${d.name}</div></td>
           <td><span style="color:var(--rose)">${first}</span></td>
           <td><span style="color:${last>=60?'var(--emerald)':'var(--rose)'}">${last}</span></td>
           <td><span class="sc-c ${improve>=0?'up':'dn'}">${improve>=0?'+':''}${improve} ${improve>=0?'↑':'↓'}</span></td>
@@ -6728,7 +6728,7 @@ async function loadTeacherStudents() {
       const cls = i===0?'rn1':i===1?'rn2':i===2?'rn3':'rno';
       return `<div class="rk-item">
         <div class="rk-num ${cls}">${i+1}</div>
-        <div class="av" style="background:linear-gradient(135deg,var(--indigo),var(--violet))">${(s.name||'?')[0]}</div>
+        <div class="av" style="background:var(--accent)">${(s.name||'?')[0]}</div>
         <div style="flex:1"><div style="font-weight:600">${s.name}</div>
           <div style="font-size:.78rem;color:var(--text-m)">平均 ${s.avg} 分</div></div>
         ${i===0?'<i class="fa fa-crown" style="color:var(--amber)"></i>':''}
@@ -6782,7 +6782,7 @@ function renderStudentTable(students) {
                          `<span class="chip cg" style="font-size:.65rem;cursor:pointer" onclick="openChangeClass('${s.id}','${s.name}')">未分配 ✏️</span>`;
     return `<tr data-class-id="${s.class_id||''}" data-student-id="${s.id}">
       <td><input type="checkbox" class="student-chk" value="${s.id}" onchange="updateStudentBatchBar()" style="accent-color:var(--indigo)"></td>
-      <td><div class="fx ai-c g3x"><div class="av" style="background:linear-gradient(135deg,var(--indigo),var(--sky))">${(s.name||'?')[0]}</div>${s.name}</div></td>
+      <td><div class="fx ai-c g3x"><div class="av" style="background:var(--accent)">${(s.name||'?')[0]}</div>${s.name}</div></td>
       <td style="color:var(--text-m)">${s.student_number||'—'}</td>
       <td>${classDisplay}</td>
       <td>${pwStatus}</td>
@@ -7052,12 +7052,12 @@ async function loadClassManagement() {
   const countMap = {};
   (allStudents||[]).forEach(s => { if(s.class_id) countMap[s.class_id] = (countMap[s.class_id]||0)+1; });
 
-  const colors = ['var(--indigo),var(--sky)','var(--emerald),var(--teal)','var(--amber),var(--orange)','var(--violet),var(--purple)','var(--rose),var(--red)'];
+  const colors = ['var(--accent)','var(--success)','var(--warning)','var(--accent)','var(--danger)'];
   grid.innerHTML = classes.map((c, i) => {
     const cnt = countMap[c.id] || 0;
     const col = colors[i % colors.length];
     return `<div class="card" style="cursor:pointer;position:relative" onclick="openClassDash('${c.id}')">
-      <div class="bar" style="background:linear-gradient(90deg,${col})"></div>
+      <div class="bar" style="background:${col}"></div>
       <div class="fx ai-c jb mb3">
         <div>
           <div style="font-weight:700;font-size:1.05rem">${c.name}</div>
@@ -7165,7 +7165,7 @@ async function openClassDash(classId) {
     const scores = avgMap[s.id]||[];
     const avg = scores.length ? Math.round(scores.reduce((a,b)=>a+b,0)/scores.length) : null;
     return `<tr>
-      <td><div class="fx ai-c g3x"><div class="av" style="background:linear-gradient(135deg,var(--indigo),var(--sky))">${(s.name||'?')[0]}</div>${s.name}</div></td>
+      <td><div class="fx ai-c g3x"><div class="av" style="background:var(--accent)">${(s.name||'?')[0]}</div>${s.name}</div></td>
       <td style="color:var(--text-m)">${s.student_number||'—'}</td>
       <td><span style="color:${avg>=80?'var(--emerald)':avg>=60?'var(--amber)':'var(--rose)'};font-weight:700">${avg||'—'}</span></td>
       <td>${scores.length}</td>
@@ -7695,7 +7695,7 @@ async function loadAdminDash() {
   const tAct = document.getElementById('a-teacher-activity');
   tAct.innerHTML = (teachers||[]).map(t => `
     <div class="log-item">
-      <div class="av" style="background:linear-gradient(135deg,var(--amber),var(--orange));width:30px;height:30px;font-size:.7rem">${(t.name||'?')[0]}</div>
+      <div class="av" style="background:var(--warning);width:30px;height:30px;font-size:.7rem">${(t.name||'?')[0]}</div>
       <div style="flex:1"><div style="font-size:.84rem;font-weight:600">${t.name}</div>
         <div style="font-size:.72rem;color:var(--text-m)">最後活動：${t.last_active?new Date(t.last_active).toLocaleDateString('zh-TW'):'從未'}</div></div>
       <span class="chip ca" style="font-size:.65rem">教師</span>
@@ -7706,7 +7706,7 @@ async function loadAdminDash() {
   const sAct = document.getElementById('a-student-activity');
   sAct.innerHTML = (students||[]).map(s => `
     <div class="log-item">
-      <div class="av" style="background:linear-gradient(135deg,var(--indigo),var(--sky));width:30px;height:30px;font-size:.7rem">${(s.name||'?')[0]}</div>
+      <div class="av" style="background:var(--accent);width:30px;height:30px;font-size:.7rem">${(s.name||'?')[0]}</div>
       <div style="flex:1"><div style="font-size:.84rem;font-weight:600">${s.name} <span style="font-size:.72rem;color:var(--text-l)">${s.student_number||''}</span></div>
         <div style="font-size:.72rem;color:var(--text-m)">最後登入：${s.last_active?new Date(s.last_active).toLocaleDateString('zh-TW'):'從未'}</div></div>
       <span class="chip ${s.password_changed?'ce':'ca'}" style="font-size:.65rem">${s.password_changed?'密碼已設':'預設密碼'}</span>
@@ -7722,7 +7722,7 @@ async function loadAdminTeachers() {
   const tbody = document.getElementById('admin-teacher-tbody');
   tbody.innerHTML = (teachers||[]).map(t => {
     return `<tr>
-      <td><div class="fx ai-c g3x"><div class="av" style="background:linear-gradient(135deg,var(--amber),var(--orange))">${(t.name||'?')[0]}</div>${t.name}</div></td>
+      <td><div class="fx ai-c g3x"><div class="av" style="background:var(--warning)">${(t.name||'?')[0]}</div>${t.name}</div></td>
       <td style="color:var(--text-m);font-size:.82rem">${APP.user?.email||'—'}</td>
       <td>${qMap[t.id]||0}</td>
       <td>—</td>
@@ -7756,7 +7756,7 @@ async function loadAdminStudents() {
                           `<span style="color:var(--text-l);font-size:.75rem">未填寫</span>`;
     return `<tr>
       <td><input type="checkbox" class="admin-student-chk" value="${s.id}" onchange="updateAdminBatchBar('student')" style="accent-color:var(--rose)"></td>
-      <td><div class="fx ai-c g3x"><div class="av" style="background:linear-gradient(135deg,var(--indigo),var(--sky))">${(s.name||'?')[0]}</div>${s.name}</div></td>
+      <td><div class="fx ai-c g3x"><div class="av" style="background:var(--accent)">${(s.name||'?')[0]}</div>${s.name}</div></td>
       <td style="color:var(--text-m)">${s.student_number||'—'}</td>
       <td style="font-size:.82rem">${emailDisplay}</td>
       <td><span class="chip ${s.password_changed?'ce':'ca'}" style="font-size:.65rem">${s.password_changed?'已修改':'預設('+( s.birth_date||'...')+')'}</span></td>
@@ -7789,10 +7789,10 @@ async function loadAdminAllAccounts() {
     const roleChip = a.role === 'admin' ? '<span class="admin-badge">管理員</span>' :
                      a.role === 'teacher' ? '<span class="chip ca">教師</span>' :
                      '<span class="chip ci">學生</span>';
-    const avColor = a.role === 'admin' ? 'var(--rose),var(--violet)' :
-                    a.role === 'teacher' ? 'var(--amber),var(--orange)' : 'var(--indigo),var(--sky)';
+    const avColor = a.role === 'admin' ? 'var(--danger)' :
+                    a.role === 'teacher' ? 'var(--warning)' : 'var(--accent)';
     return `<tr>
-      <td><div class="fx ai-c g3x"><div class="av" style="background:linear-gradient(135deg,${avColor})">${(a.name||'?')[0]}</div>${a.name}</div></td>
+      <td><div class="fx ai-c g3x"><div class="av" style="background:${avColor}">${(a.name||'?')[0]}</div>${a.name}</div></td>
       <td>${roleChip}</td>
       <td style="color:var(--text-m);font-size:.82rem">${a.student_number || '—'}</td>
       <td><span class="chip ${a.password_changed?'ce':'ca'}" style="font-size:.65rem">${a.password_changed!==false?'已設定':'預設'}</span></td>
