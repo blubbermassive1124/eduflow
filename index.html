@@ -335,9 +335,9 @@ tbody tr:hover td{background:rgba(94,175,193,.025)}
 /* Knowledge map */
 .km-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(105px,1fr));gap:9px}
 .km-node{background:var(--surface);
-  border:1px solid var(--border);border-radius:15px;padding:13px 9px;text-align:center;
-  cursor:pointer;transition:all .25s cubic-bezier(.34,1.3,.64,1);box-shadow:none}
-.km-node:hover{box-shadow:var(--shadow-md)}
+  border:1px solid var(--border);border-radius:var(--r-lg);padding:13px 9px;text-align:center;
+  cursor:pointer;transition:border-color var(--t-fast),box-shadow var(--t-fast);box-shadow:none}
+.km-node:hover{border-color:var(--muted);box-shadow:var(--shadow-md)}
 .km-node.m{border-color:rgba(16,185,129,.35);background:rgba(16,185,129,.07)}
 .km-node.l{border-color:rgba(245,158,11,.35);background:rgba(245,158,11,.07)}
 .km-node.s{border-color:rgba(244,63,94,.35);background:rgba(244,63,94,.07)}
@@ -349,8 +349,8 @@ tbody tr:hover td{background:rgba(94,175,193,.025)}
 /* Rankings */
 .rk-item{display:flex;align-items:center;gap:12px;padding:11px 14px;border-radius:var(--r-lg);
   background:var(--surface);border:1px solid var(--border);box-shadow:none;
-  margin-bottom:7px;transition:all .2s cubic-bezier(.34,1.2,.64,1)}
-.rk-item:hover{background:var(--surface)}
+  margin-bottom:7px;transition:background var(--t-fast),border-color var(--t-fast)}
+.rk-item:hover{background:var(--raised);border-color:var(--muted)}
 .rk-num{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;
   font-weight:800;font-size:.82rem;flex-shrink:0}
 .rn1{background:var(--warning);color:var(--ink);box-shadow:0 2px 8px rgba(245,158,11,.35)}
@@ -366,8 +366,8 @@ tbody tr:hover td{background:rgba(94,175,193,.025)}
 /* Assign cards */
 .as-card{background:var(--surface);
   border:1px solid var(--border);border-radius:var(--r-lg);padding:16px;
-  box-shadow:none;cursor:pointer;transition:all .25s cubic-bezier(.34,1.2,.64,1)}
-.as-card:hover{background:var(--surface)box-shadow:var(--shadow-md)}
+  box-shadow:none;cursor:pointer;transition:border-color var(--t-fast),box-shadow var(--t-fast)}
+.as-card:hover{border-color:var(--muted);box-shadow:var(--shadow-md)}
 .as-foot{display:flex;align-items:center;justify-content:space-between;margin-top:12px}
 
 /* Error book */
@@ -638,9 +638,8 @@ hr.dv{border:none;border-top:1px solid rgba(94,175,193,.1);margin:14px 0}
 /* Liquid wave backdrop — only this layer gets SVG filter */
 .card > * { position: relative; z-index: 1; }
 .card:hover {
-  transform: translateY(-2px);
+  border-color: var(--muted);
   box-shadow: var(--shadow-md);
-  background: var(--surface);
 }
 
 /* ── Stat cards ── */
@@ -767,7 +766,7 @@ hr.dv{border:none;border-top:1px solid rgba(94,175,193,.1);margin:14px 0}
   position: relative; overflow: hidden;
 }
 .as-card > * { position: relative; z-index: 1; }
-.as-card:hover { background: var(--surface); transform: translateY(-3px); box-shadow: var(--shadow-md); }
+.as-card:hover { border-color: var(--muted); box-shadow: var(--shadow-md); }
 
 /* ── km-node (knowledge map) ── */
 .km-node {
@@ -784,7 +783,7 @@ hr.dv{border:none;border-top:1px solid rgba(94,175,193,.1);margin:14px 0}
   position: relative; overflow: hidden;
 }
 .km-node > * { position: relative; z-index: 1; }
-.km-node:hover { transform: translateY(-4px); box-shadow: var(--shadow-md); }
+.km-node:hover { border-color: var(--muted); box-shadow: var(--shadow-md); }
 
 /* ── Chips — tiny CA shimmer ── */
 .chip {
@@ -859,7 +858,7 @@ hr.dv{border:none;border-top:1px solid rgba(94,175,193,.1);margin:14px 0}
   position: relative; overflow: hidden;
 }
 .rk-item > * { position: relative; z-index: 1; }
-.rk-item:hover { transform: translateX(4px); background: var(--surface); }
+.rk-item:hover { background: var(--raised); border-color: var(--muted); }
 
 
 /* ── 深色背景文字清晰度強化 ── */
@@ -885,7 +884,7 @@ hr.dv{border:none;border-top:1px solid rgba(94,175,193,.1);margin:14px 0}
   position:relative;overflow:hidden;
   transition:all .3s cubic-bezier(.34,1.2,.64,1)}
 .card>*{position:relative;z-index:1}
-.card:hover{background:var(--surface);box-shadow:var(--shadow-md)}
+.card:hover{border-color:var(--muted);box-shadow:var(--shadow-md)}
 
 /* ── .sc stat card ── */
 .sc{
@@ -972,21 +971,21 @@ hr.dv{border:none;border-top:1px solid rgba(94,175,193,.1);margin:14px 0}
   background:transparent;border:1px solid rgba(255,255,255,0.15);
   box-shadow:none;margin-bottom:7px;transition:all .2s;
   }
-.rk-item:hover{background:transparent;box-shadow:none}
+.rk-item:hover{background:var(--raised);border-color:var(--muted)}
 
 /* ── as-card ── */
 .as-card{background:transparent;
   border:1px solid rgba(255,255,255,0.16);border-radius:var(--r-lg);padding:16px;
   box-shadow:none;cursor:pointer;transition:all .25s cubic-bezier(.34,1.2,.64,1);
   position:relative;overflow:hidden}
-.as-card:hover{background:transparentbox-shadow:none}
+.as-card:hover{border-color:var(--muted);box-shadow:var(--shadow-md)}
 
 /* ── km-node ── */
 .km-node{background:transparent;
   border:1px solid rgba(255,255,255,0.16);border-radius:15px;padding:13px 9px;
   text-align:center;cursor:pointer;transition:all .25s cubic-bezier(.34,1.3,.64,1);
   box-shadow:none}
-.km-node:hover{box-shadow:none}
+.km-node:hover{border-color:var(--muted);box-shadow:var(--shadow-md)}
 .km-node.m{border-color:rgba(16,185,129,0.32);background:rgba(16,185,129,0.05)}
 .km-node.l{border-color:rgba(245,158,11,0.32);background:rgba(245,158,11,0.05)}
 .km-node.s{border-color:rgba(244,63,94,0.32);background:rgba(244,63,94,0.05)}
