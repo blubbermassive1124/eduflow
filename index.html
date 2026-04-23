@@ -109,11 +109,11 @@
   --i-s: var(--accent-soft); --s-s: var(--accent-soft);
   --e-s: var(--success-soft); --r-s: var(--danger-soft);
   --a-s: var(--warning-soft); --v-s: var(--accent-soft);
-  /* Text — 護眼高對比 */
-  --text:   var(--ink);   /* 主文字：亮暖白 */
-  --text-2: var(--accent-soft);   /* 次強調：明亮冰藍 */
-  --text-m: var(--muted);   /* 次要文字：中灰（提升可讀性）*/
-  --text-l: var(--faint);   /* 說明文字：灰（提升可讀性）*/
+  /* Text — WCAG AA 對比 */
+  --text:   var(--ink);     /* 主文字 */
+  --text-2: var(--accent);  /* 次強調：accent 色 */
+  --text-m: var(--muted);   /* 次要文字：5.5:1 對比 */
+  --text-l: var(--muted);   /* 說明文字：提升至 --muted 以達 AA 對比（faint 2.7:1 太淺） */
 }
 
 *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
@@ -887,7 +887,7 @@ hr.dv{border:none;border-top:1px solid rgba(94,175,193,.1);margin:14px 0}
   padding:0 26px;height:60px;display:flex;align-items:center;gap:14px}
 
 /* ── sidebar ── */
-.sidebar{width:225px;background:rgba(255,255,255,0.01);
+.sidebar{width:225px;background:var(--surface);
   
   border-right:1px solid rgba(255,255,255,0.14);
   padding:18px 9px;position:sticky;top:60px;
@@ -1211,7 +1211,7 @@ a { color: var(--indigo); }
   border:1px solid rgba(94,175,193,.2);border-radius:var(--r-lg);padding:5px 12px;font-size:.78rem;color:var(--text);margin:3px}
 .pdf-file-chip .fa-xmark{cursor:pointer;opacity:.5;font-size:.7rem}
 .pdf-file-chip .fa-xmark:hover{opacity:1;color:var(--rose)}
-.pdf-progress{background:rgba(255,255,255,.08);border-radius:var(--r-lg);height:8px;overflow:hidden;margin:6px 0}
+.pdf-progress{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);height:8px;overflow:hidden;margin:6px 0}
 .pdf-progress-bar{height:100%;background:var(--accent);border-radius:var(--r-lg);
   transition:width .3s ease}
 .pdf-q-card{border:1px solid var(--border);border-radius:var(--r-lg);padding:14px;margin-bottom:10px;
@@ -1252,7 +1252,7 @@ a { color: var(--indigo); }
 .user-dd .dd-role-tag.teacher{background:rgba(245,158,11,.15);color:var(--warning)}
 .user-dd .dd-role-tag.admin{background:rgba(239,68,68,.15);color:var(--danger)}
 .user-dd .dd-email{font-size:.7rem;color:rgba(142,184,200,.55);margin-top:3px;word-break:break-all}
-.user-dd .dd-sep{height:1px;background:rgba(255,255,255,.09);margin:5px 8px}
+.user-dd .dd-sep{height:1px;background:var(--border);margin:5px 8px}
 .user-dd button{display:flex;align-items:center;gap:9px;width:100%;padding:9px 13px;border-radius:var(--r-lg);
   border:none;background:none;color:rgba(210,205,198,.82);font-size:.8rem;font-weight:500;
   font-family:var(--font-ui);cursor:pointer;transition:background .15s,color .15s;text-align:left;white-space:nowrap}
@@ -1260,7 +1260,7 @@ a { color: var(--indigo); }
 .user-dd button:hover{background:rgba(13,148,136,.18);color:var(--accent-soft)}
 .user-dd button:hover i{color:var(--accent-soft)}
 .user-dd .dd-quota{padding:8px 14px;font-size:.72rem;color:rgba(142,184,200,.5)}
-.user-dd .dd-quota-bar{height:4px;background:rgba(255,255,255,.08);border-radius:var(--r-sm);margin-top:4px;overflow:hidden}
+.user-dd .dd-quota-bar{height:4px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-sm);margin-top:4px;overflow:hidden}
 .user-dd .dd-quota-fill{height:100%;border-radius:var(--r-sm);background:var(--accent);transition:width .3s}
 
 /* ═══════════════ API KEY MODAL ═══════════════ */
@@ -1339,7 +1339,7 @@ a { color: var(--indigo); }
 .gas-opts { display:grid; grid-template-columns:1fr 1fr; gap:.28rem; }
 .gas-opt {
   font-size:.76rem; padding:.25rem .6rem; border-radius:.38rem;
-  background:rgba(255,255,255,.04); color:var(--text-m);
+  background:var(--surface); color:var(--ink);
   border:1px solid var(--border);
   overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
 }
@@ -1367,15 +1367,15 @@ a { color: var(--indigo); }
   display:flex; gap:8px; flex-wrap:wrap; margin-top:10px;
 }
 .gas-img-stat-chip {
-  font-size:.75rem; padding:.22rem .7rem; border-radius:var(--r-lg);
-  background:rgba(255,255,255,.06); border:1px solid var(--border);
-  color:var(--text-m);
+  font-size:.75rem; padding:.22rem .7rem; border-radius:var(--r-sm);
+  background:var(--surface); border:1px solid var(--border);
+  color:var(--muted);
 }
 .gas-img-stat-chip.ok  { background:rgba(16,185,129,.1);  color:var(--emerald); border-color:rgba(16,185,129,.25); }
 .gas-img-stat-chip.err { background:rgba(244,63,94,.08);  color:var(--rose);    border-color:rgba(244,63,94,.2); }
 .gas-img-stat-chip.pnd { background:rgba(234,179,8,.08);  color:var(--warning);        border-color:rgba(234,179,8,.2); }
 .gas-ocr-progress {
-  background:rgba(255,255,255,.05); border-radius:.5rem; height:6px;
+  background:var(--surface); border:1px solid var(--border); border-radius:.5rem; height:6px;
   overflow:hidden; margin:10px 0 4px;
 }
 .gas-ocr-bar {
