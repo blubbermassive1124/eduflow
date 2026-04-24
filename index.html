@@ -259,7 +259,7 @@ tbody tr:hover td{background:var(--accent-soft)}
   cursor:pointer;border:1px solid var(--border)}
 .notif-btn{position:relative}
 .notif-dot{position:absolute;top:-1px;right:-1px;width:9px;height:9px;border-radius:50%;
-  background:var(--rose);border:2px solid #eef2ff}
+  background:var(--rose);border:2px solid var(--raised)}
 
 /* ═══════════════ SIDEBAR ═══════════════ */
 .sidebar{width:225px;background:var(--surface);
@@ -361,7 +361,7 @@ tbody tr:hover td{background:var(--accent-soft)}
 .rk-item:hover{background:var(--raised);border-color:var(--muted)}
 .rk-num{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;
   font-weight:800;font-size:.82rem;flex-shrink:0}
-.rn1{background:var(--warning);color:var(--ink);box-shadow:0 2px 8px rgba(245,158,11,.35)}
+.rn1{background:var(--warning);color:var(--ink)}
 .rn2{background:var(--muted);color:var(--raised)}
 .rn3{background:var(--warning);color:var(--raised)}
 .rno{background:var(--accent-soft);border:1px solid var(--border);color:var(--indigo)}
@@ -369,7 +369,7 @@ tbody tr:hover td{background:var(--accent-soft)}
 /* Avatar */
 .av{width:34px;height:34px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;
   justify-content:center;font-size:.8rem;font-weight:700;color:var(--raised);
-  border:2px solid rgba(255,255,255,.8);box-shadow:0 2px 8px rgba(0,0,0,.1)}
+  border:2px solid var(--raised);box-shadow:var(--shadow-xs)}
 
 /* Assign cards */
 .as-card{background:var(--surface);
@@ -882,7 +882,7 @@ a { color: var(--indigo); }
 .user-dd .dd-hdr{padding:12px 14px;border-bottom:1px solid var(--border);margin-bottom:4px}
 .user-dd .dd-name{font-size:.88rem;font-weight:600;color:var(--ink)}
 .user-dd .dd-role-tag{display:inline-block;font-size:.65rem;padding:2px 8px;border-radius:var(--r-lg);margin-top:4px;font-weight:600}
-.user-dd .dd-role-tag.student{background:var(--border);color:#a5b4fc}
+.user-dd .dd-role-tag.student{background:var(--border);color:var(--accent)}
 .user-dd .dd-role-tag.teacher{background:rgba(245,158,11,.15);color:var(--warning)}
 .user-dd .dd-role-tag.admin{background:rgba(239,68,68,.15);color:var(--danger)}
 .user-dd .dd-email{font-size:.7rem;color:var(--muted);margin-top:3px;word-break:break-all}
@@ -924,22 +924,22 @@ a { color: var(--indigo); }
 .gas-how-to h4 { font-size:.8rem; font-weight:700; color:var(--emerald); margin:0 0 .4rem; }
 .gas-how-to ol { margin:0; padding-left:1.2rem; font-size:.79rem; color:var(--text-m); line-height:1.9; }
 .gas-code-area {
-  background:#161624; border-radius:var(--r-lg); overflow:hidden;
+  background:var(--surface); border-radius:var(--r-lg); overflow:hidden;
   border:1px solid var(--border); margin-bottom:14px;
 }
 .gas-code-label {
-  background:#1e1e32; color:var(--text-m); font-size:.72rem;
+  background:var(--bg); color:var(--text-m); font-size:.72rem;
   font-family:var(--font-mono); padding:.42rem .9rem;
   display:flex; justify-content:space-between; align-items:center;
 }
 .gas-code-area textarea {
-  display:block; width:100%; background:#161624; color:var(--success);
+  display:block; width:100%; background:var(--surface); color:var(--success);
   font-family:var(--font-mono);
   font-size:.8rem; border:none; padding:.9rem; resize:vertical;
   min-height:160px; outline:none; line-height:1.65; box-sizing:border-box;
   caret-color:var(--raised);
 }
-.gas-code-area textarea::placeholder { color:#3a3a5a; }
+.gas-code-area textarea::placeholder { color:var(--faint); }
 .gas-cards-scroll {
   max-height:380px; overflow-y:auto; padding-right:2px;
   display:flex; flex-direction:column; gap:8px;
@@ -958,7 +958,7 @@ a { color: var(--indigo); }
   font-size:.68rem; font-weight:700; padding:.12rem .5rem;
   border-radius:var(--r-lg); white-space:nowrap;
 }
-.gas-badge-mc  { background:var(--border); color:#818cf8; }
+.gas-badge-mc  { background:var(--border); color:var(--accent); }
 .gas-badge-tf  { background:rgba(234,179,8,.15);  color:var(--warning); }
 .gas-badge-grp { background:rgba(14,165,233,.15); color:var(--accent); }
 .gas-badge-img { background:rgba(244,63,94,.12);  color:var(--rose); }
