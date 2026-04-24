@@ -152,7 +152,7 @@ body{font-family:var(--font-ui);background:var(--bg);color:var(--text);min-heigh
 /* ── Chips ── */
 .chip{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:var(--r-sm);
   font-size:.72rem;font-weight:500;border:1px solid;letter-spacing:0.02em;white-space:nowrap}
-.ci{background:var(--i-s);border-color:rgba(94,175,193,.22);color:var(--indigo)}
+.ci{background:var(--i-s);border-color:var(--border);color:var(--indigo)}
 .cs{background:var(--s-s);border-color:rgba(14,165,233,.22);color:var(--sky)}
 .ce{background:var(--e-s);border-color:rgba(16,185,129,.22);color:var(--emerald)}
 .cr{background:var(--r-s);border-color:rgba(244,63,94,.22);color:var(--rose)}
@@ -209,7 +209,7 @@ textarea.inp{resize:vertical;min-height:88px;border:1px solid var(--border-stron
 textarea.inp:focus{border-color:var(--accent)}
 
 /* ── Progress ── */
-.prog-t{background:rgba(94,175,193,.1);border-radius:var(--r-lg);height:7px;overflow:hidden}
+.prog-t{background:var(--accent-soft);border-radius:var(--r-lg);height:7px;overflow:hidden}
 .prog-f{height:100%;border-radius:var(--r-lg);transition:width .6s cubic-bezier(0.2, 0, 0.2, 1)}
 .pf-i{background:var(--accent)}
 .pf-e{background:var(--success)}
@@ -220,8 +220,8 @@ textarea.inp:focus{border-color:var(--accent)}
 /* ── Toggle ── */
 .tog{display:inline-block;position:relative;width:44px;height:24px}
 .tog input{opacity:0;width:0;height:0}
-.tog-s{position:absolute;cursor:pointer;inset:0;background:rgba(94,175,193,.12);
-  border:1px solid rgba(94,175,193,.18);border-radius:var(--r-lg);transition:.3s}
+.tog-s{position:absolute;cursor:pointer;inset:0;background:var(--border);
+  border:1px solid var(--border);border-radius:var(--r-lg);transition:.3s}
 .tog-s::before{content:'';position:absolute;height:17px;width:17px;left:3px;bottom:3px;
   background:var(--raised);border-radius:50%;transition:.3s;box-shadow:0 2px 5px rgba(0,0,0,.15)}
 .tog input:checked+.tog-s{background:var(--accent);border-color:transparent}
@@ -230,12 +230,12 @@ textarea.inp:focus{border-color:var(--accent)}
 /* ── Table ── */
 .tbl-w{overflow-x:auto;border-radius:var(--r-lg)}
 table{width:100%;border-collapse:collapse}
-thead tr{background:rgba(94,175,193,.05)}
+thead tr{background:var(--accent-soft)}
 th{padding:10px 15px;text-align:left;font-size:.7rem;font-weight:700;text-transform:uppercase;
   letter-spacing:.8px;color:var(--text-m);white-space:nowrap}
-td{padding:12px 15px;font-size:.875rem;border-bottom:1px solid rgba(94,175,193,.07)}
+td{padding:12px 15px;font-size:.875rem;border-bottom:1px solid var(--accent-soft)}
 tr:last-child td{border-bottom:none}
-tbody tr:hover td{background:rgba(94,175,193,.025)}
+tbody tr:hover td{background:var(--accent-soft)}
 
 /* ═══════════════ NAVIGATION ═══════════════ */
 .topnav{position:sticky;top:0;z-index:100;
@@ -318,12 +318,12 @@ tbody tr:hover td{background:rgba(94,175,193,.025)}
 .chd{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
 
 /* Tab bar */
-.tab-bar{display:flex;gap:2px;background:rgba(94,175,193,.07);border-radius:50px;
+.tab-bar{display:flex;gap:2px;background:var(--accent-soft);border-radius:50px;
   padding:3px;width:fit-content;margin-bottom:18px}
 .tb{padding:6px 16px;border-radius:50px;cursor:pointer;font-size:.8rem;font-weight:600;
   border:none;background:none;color:var(--text-m);font-family:inherit;transition:all .2s}
 .tb.on{background:var(--accent);color:var(--raised);
-  box-shadow:0 2px 8px rgba(13,148,136,.30)}
+  box-shadow:none}
 
 /* Chart bars */
 .bars{display:flex;align-items:flex-end;gap:6px;height:75px}
@@ -364,7 +364,7 @@ tbody tr:hover td{background:rgba(94,175,193,.025)}
 .rn1{background:var(--warning);color:var(--ink);box-shadow:0 2px 8px rgba(245,158,11,.35)}
 .rn2{background:var(--muted);color:var(--raised)}
 .rn3{background:var(--warning);color:var(--raised)}
-.rno{background:rgba(94,175,193,.1);border:1px solid rgba(94,175,193,.18);color:var(--indigo)}
+.rno{background:var(--accent-soft);border:1px solid var(--border);color:var(--indigo)}
 
 /* Avatar */
 .av{width:34px;height:34px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;
@@ -385,9 +385,9 @@ tbody tr:hover td{background:rgba(94,175,193,.025)}
 .er-item:hover{}
 
 /* Upload zone */
-.upz{border:2px dashed rgba(94,175,193,.28);border-radius:var(--r-lg);padding:34px 18px;
+.upz{border:2px dashed var(--border-strong);border-radius:var(--r-lg);padding:34px 18px;
   text-align:center;cursor:pointer;background:var(--i-s);transition:all .2s}
-.upz:hover{border-color:var(--indigo);background:rgba(94,175,193,.14)}
+.upz:hover{border-color:var(--indigo);background:var(--accent-soft)}
 .upz-ico{font-size:2.2rem;color:var(--text-l);margin-bottom:10px}
 
 /* Review question item */
@@ -396,7 +396,7 @@ tbody tr:hover td{background:rgba(94,175,193,.025)}
 .rv-act{display:flex;gap:6px;flex-wrap:wrap;margin-top:12px}
 
 /* Divider */
-hr.dv{border:none;border-top:1px solid rgba(94,175,193,.1);margin:14px 0}
+hr.dv{border:none;border-top:1px solid var(--accent-soft);margin:14px 0}
 
 /* ═══════════════ LOGIN PAGE ═══════════════ */
 #p-login{justify-content:center;align-items:center;
@@ -410,22 +410,22 @@ hr.dv{border:none;border-top:1px solid rgba(94,175,193,.1);margin:14px 0}
 /* ✨ 頂部光線 */
 .login-box>*{position:relative;z-index:1}
 .login-logo{text-align:center;margin-bottom:28px}
-.login-logo .logo-txt{font-family:var(--font-display);font-size:2.2rem;color:var(--accent-soft)}
+.login-logo .logo-txt{font-family:var(--font-display);font-size:2.2rem;color:var(--accent)}
 .login-logo .logo-sub{font-size:.83rem;color:var(--text-m);margin-top:3px}
-.role-sw{display:flex;background:rgba(94,175,193,.07);border-radius:50px;padding:3px;margin-bottom:22px}
+.role-sw{display:flex;background:var(--accent-soft);border-radius:50px;padding:3px;margin-bottom:22px}
 .role-btn{flex:1;padding:8px;border-radius:50px;cursor:pointer;text-align:center;
   font-size:.84rem;font-weight:600;transition:all .2s;border:none;background:none;
   color:var(--text-m);font-family:inherit}
 .role-btn.on{background:var(--accent);color:var(--raised);
-  box-shadow:0 2px 10px rgba(94,175,193,.3)}
+  box-shadow:none}
 .login-action{width:100%;padding:13px;border-radius:50px;border:none;cursor:pointer;
   background:var(--accent);color:var(--raised);
   font-family:var(--font-ui);font-size:1rem;font-weight:700;margin-top:6px;
-  transition:all .25s;box-shadow:0 6px 20px rgba(79,70,229,.35),inset 0 1px 0 rgba(255,255,255,.2)}
-.login-action:hover{box-shadow:0 10px 28px rgba(79,70,229,.42)}
+  transition:all .25s;box-shadow:none}
+.login-action:hover{box-shadow:var(--shadow-md)}
 
 /* ═══════════════ SETUP WIZARD ═══════════════ */
-.setup-ov{position:fixed;inset:0;z-index:999;background:rgba(238,242,255,.92);
+.setup-ov{position:fixed;inset:0;z-index:999;background:rgba(26,25,24,.5);
   
   display:none;justify-content:center;align-items:center;padding:20px}
 .setup-ov.show{display:flex}
@@ -453,23 +453,23 @@ hr.dv{border:none;border-top:1px solid rgba(94,175,193,.1);margin:14px 0}
 .q-txt{font-size:1.1rem;line-height:1.8;color:var(--text);margin-bottom:24px}
 .opts{display:flex;flex-direction:column;gap:9px}
 .opt{display:flex;align-items:center;gap:13px;padding:13px 16px;border-radius:var(--r-lg);
-  border:1px solid rgba(94,175,193,.15);background:rgba(255,255,255,.45);
+  border:1px solid var(--border);background:var(--raised);
   cursor:pointer;transition:all .2s;font-size:.92rem;
   }
-.opt:hover{border-color:rgba(94,175,193,.35);background:rgba(94,175,193,.07)}
-.opt.sel{border-color:var(--indigo);background:var(--i-s);box-shadow:0 0 0 2px rgba(94,175,193,.15)}
+.opt:hover{border-color:var(--accent);background:var(--accent-soft)}
+.opt.sel{border-color:var(--indigo);background:var(--i-s);box-shadow:0 0 0 2px var(--border)}
 .opt.ok{border-color:var(--emerald);background:var(--e-s)}
 .opt.no{border-color:var(--rose);background:var(--r-s)}
-.opt-k{width:28px;height:28px;border-radius:var(--r-lg);background:rgba(255,255,255,.7);
-  border:1px solid rgba(94,175,193,.2);display:flex;align-items:center;justify-content:center;
+.opt-k{width:28px;height:28px;border-radius:var(--r-lg);background:var(--raised);
+  border:1px solid var(--border);display:flex;align-items:center;justify-content:center;
   font-size:.78rem;font-weight:700;flex-shrink:0;transition:all .2s}
 .opt.sel .opt-k{background:var(--indigo);border-color:var(--indigo);color:var(--raised)}
 .opt.ok .opt-k{background:var(--emerald);border-color:var(--emerald);color:var(--raised)}
 .opt.no .opt-k{background:var(--rose);border-color:var(--rose);color:var(--raised)}
 .q-nav{display:flex;align-items:center;justify-content:space-between}
 .q-dots{display:flex;gap:5px;flex-wrap:wrap;justify-content:center}
-.qd{width:9px;height:9px;border-radius:50%;background:rgba(94,175,193,.15);
-  border:1px solid rgba(94,175,193,.2);cursor:pointer;transition:all .18s}
+.qd{width:9px;height:9px;border-radius:50%;background:var(--border);
+  border:1px solid var(--border);cursor:pointer;transition:all .18s}
 .qd.ans{background:var(--indigo);border-color:var(--indigo)}
 .qd.cur{background:var(--sky);border-color:var(--sky);box-shadow:0 0 7px var(--sky)}
 .qd.flg{background:var(--amber);border-color:var(--amber)}
@@ -506,8 +506,8 @@ hr.dv{border:none;border-top:1px solid rgba(94,175,193,.1);margin:14px 0}
 .notif-panel>*{position:relative;z-index:1}
 .notif-panel.show{display:block;animation:pageIn .25s cubic-bezier(0.2, 0, 0.2, 1)}
 .notif-item{display:flex;gap:10px;padding:10px;border-radius:var(--r-lg);margin-bottom:6px;
-  background:rgba(255,255,255,.4);cursor:pointer;transition:background .2s;align-items:flex-start}
-.notif-item:hover{background:rgba(255,255,255,.65)}
+  background:transparent;cursor:pointer;transition:background .2s;align-items:flex-start}
+.notif-item:hover{background:var(--surface)}
 .notif-item.unread{border-left:3px solid var(--indigo)}
 .ni-ico{width:32px;height:32px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:.85rem}
 
@@ -551,7 +551,7 @@ hr.dv{border:none;border-top:1px solid rgba(94,175,193,.1);margin:14px 0}
 
 /* Log item */
 .log-item{display:flex;align-items:center;gap:10px;padding:8px 11px;border-radius:var(--r-lg);
-  font-size:.83rem;border-bottom:1px solid rgba(94,175,193,.07)}
+  font-size:.83rem;border-bottom:1px solid var(--accent-soft)}
 .log-item.warn{background:rgba(244,63,94,.04)}
 
 /* Sparkline */
@@ -570,17 +570,17 @@ hr.dv{border:none;border-top:1px solid rgba(94,175,193,.1);margin:14px 0}
 }
 
 /* ═══════════════ IMPORT STUDENTS ═══════════════ */
-.import-dropzone{border:2px dashed rgba(94,175,193,.3);border-radius:var(--r-lg);padding:28px;text-align:center;
-  cursor:pointer;transition:all .3s;background:rgba(94,175,193,.03)}
-.import-dropzone:hover,.import-dropzone.dragover{border-color:var(--indigo);background:rgba(94,175,193,.08)}
-.import-preview{max-height:280px;overflow-y:auto;border:1px solid rgba(94,175,193,.12);border-radius:var(--r-lg);margin-top:12px}
+.import-dropzone{border:2px dashed var(--border-strong);border-radius:var(--r-lg);padding:28px;text-align:center;
+  cursor:pointer;transition:all .3s;background:var(--accent-soft)}
+.import-dropzone:hover,.import-dropzone.dragover{border-color:var(--indigo);background:var(--accent-soft)}
+.import-preview{max-height:280px;overflow-y:auto;border:1px solid var(--border);border-radius:var(--r-lg);margin-top:12px}
 .import-preview table{font-size:.8rem}
-.import-preview th{font-size:.68rem;background:rgba(94,175,193,.06);position:sticky;top:0;z-index:1}
+.import-preview th{font-size:.68rem;background:var(--accent-soft);position:sticky;top:0;z-index:1}
 .import-preview td{padding:7px 12px;font-size:.8rem}
 .import-status{margin-top:12px;padding:10px 14px;border-radius:var(--r-lg);font-size:.83rem;display:flex;align-items:center;gap:8px}
 .import-status.ok{background:var(--e-s);border:1px solid rgba(16,185,129,.2);color:var(--success)}
 .import-status.er{background:var(--r-s);border:1px solid rgba(244,63,94,.2);color:var(--danger)}
-.import-status.in{background:var(--i-s);border:1px solid rgba(94,175,193,.2);color:var(--indigo)}
+.import-status.in{background:var(--i-s);border:1px solid var(--border);color:var(--indigo)}
 .import-progress{margin-top:10px}
 .import-progress .prog-f{transition:width .3s ease}
 
@@ -589,16 +589,16 @@ hr.dv{border:none;border-top:1px solid rgba(94,175,193,.1);margin:14px 0}
   border:1px solid var(--border);border-radius:var(--r-lg);padding:36px;box-shadow:var(--shadow-md);text-align:center}
 .first-login-box .logo-txt{font-family:var(--font-display);font-size:2rem;color:var(--indigo);margin-bottom:4px}
 .pw-option{display:flex;align-items:center;gap:12px;padding:14px 16px;border-radius:var(--r-lg);
-  border:2px solid rgba(94,175,193,.15);background:rgba(255,255,255,.45);
+  border:2px solid var(--border);background:var(--raised);
   cursor:pointer;transition:all .2s;margin-bottom:10px;text-align:left}
-.pw-option:hover{border-color:rgba(94,175,193,.35);background:rgba(94,175,193,.07)}
-.pw-option.selected{border-color:var(--indigo);background:var(--i-s);box-shadow:0 0 0 3px rgba(94,175,193,.12)}
-.pw-option .pw-radio{width:20px;height:20px;border-radius:50%;border:2px solid rgba(94,175,193,.3);
+.pw-option:hover{border-color:var(--accent);background:var(--accent-soft)}
+.pw-option.selected{border-color:var(--indigo);background:var(--i-s);box-shadow:0 0 0 3px var(--border)}
+.pw-option .pw-radio{width:20px;height:20px;border-radius:50%;border:2px solid var(--border-strong);
   display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .2s}
 .pw-option.selected .pw-radio{border-color:var(--indigo);background:var(--indigo)}
 .pw-option.selected .pw-radio::after{content:'';width:8px;height:8px;border-radius:50%;background:var(--raised)}
-.pw-change-area{margin-top:14px;padding:16px;background:rgba(94,175,193,.04);border-radius:var(--r-lg);
-  border:1px solid rgba(94,175,193,.1);animation:pageIn .3s ease}
+.pw-change-area{margin-top:14px;padding:16px;background:var(--accent-soft);border-radius:var(--r-lg);
+  border:1px solid var(--accent-soft);animation:pageIn .3s ease}
 
 /* ═══════════════ ADMIN DASHBOARD ═══════════════ */
 .admin-stat{background:var(--danger-soft);
@@ -610,234 +610,18 @@ hr.dv{border:none;border-top:1px solid rgba(94,175,193,.1);margin:14px 0}
 .user-actions-cell .btn{min-width:auto;padding:5px 10px;font-size:.72rem}
 
 /* ═══════════════ EMAIL NOTIFY SETTINGS ═══════════════ */
-.notify-panel{background:rgba(94,175,193,.03);border:1px solid rgba(94,175,193,.12);border-radius:var(--r-lg);padding:14px;margin-top:8px}
+.notify-panel{background:var(--accent-soft);border:1px solid var(--border);border-radius:var(--r-lg);padding:14px;margin-top:8px}
 .notify-panel .np-title{font-size:.78rem;font-weight:700;color:var(--indigo);margin-bottom:10px;display:flex;align-items:center;gap:6px}
 .notify-item{display:flex;align-items:center;justify-content:space-between;padding:8px 0;
-  border-bottom:1px solid rgba(94,175,193,.06);font-size:.83rem}
+  border-bottom:1px solid var(--accent-soft);font-size:.83rem}
 .notify-item:last-child{border-bottom:none}
 .ni-left{display:flex;align-items:center;gap:8px}
 .ni-icon{width:28px;height:28px;border-radius:var(--r-lg);display:flex;align-items:center;justify-content:center;font-size:.75rem;flex-shrink:0}
 .ni-desc{font-size:.72rem;color:var(--text-l);margin-top:1px}
-.ni-extra{margin-top:6px;padding:8px 10px;background:rgba(255,255,255,.5);border-radius:var(--r-lg);
-  border:1px solid rgba(94,175,193,.1);display:none}
+.ni-extra{margin-top:6px;padding:8px 10px;background:var(--accent-soft);border-radius:var(--r-lg);
+  border:1px solid var(--accent-soft);display:none}
 .ni-extra.show{display:block}
 
-/* ══════════════════════════════════════════
-   LIQUID GLASS v3 — Chromatic Aberration System
-   Inspired by Samsung One UI / Apple iOS 26
-══════════════════════════════════════════ */
-
-
-/* ── Liquid Glass card — CA border + wave backdrop ── */
-.card {
-  background: var(--surface);
-  
-  
-  border: 1px solid rgba(255,255,255,0.75);
-  border-radius: var(--r-lg);
-  padding: 22px;
-  position: relative;
-  overflow: hidden;
-  /* CA chromatic aberration edge glow */
-  box-shadow: none;
-  transition: all .3s cubic-bezier(0.2, 0, 0.2, 1);
-}
-/* Liquid wave backdrop — only this layer gets SVG filter */
-.card > * { position: relative; z-index: 1; }
-.card:hover {
-  border-color: var(--muted);
-  box-shadow: var(--shadow-md);
-}
-
-/* ── Stat cards ── */
-.sc {
-  background: var(--raised);
-  border: 1px solid var(--border);
-  box-shadow: none;
-  border-radius: var(--r-lg);
-  padding: 18px;
-  position: relative;
-  overflow: visible;
-  transition: transform 220ms cubic-bezier(0.2, 0, 0.2, 1), box-shadow 220ms cubic-bezier(0.2, 0, 0.2, 1);
-}
-.sc > * { position: relative; z-index: 2; }
-.sc:hover {
-  border-color: var(--muted);
-  box-shadow: var(--shadow-md);
-}
-
-/* ── Navigation bar ── */
-.topnav {
-  position: sticky; top: 0; z-index: 100;
-  background: rgba(238,242,255,.18);
-  
-  
-  border-bottom: 1px solid rgba(255,255,255,.72);
-  box-shadow: 
-    0 2px 20px rgba(94,175,193,.07),
-    0 1px 0 rgba(255,255,255,.9),
-    -1px 0 4px rgba(244,63,140,.12),
-    1px 0 4px rgba(14,165,233,.12);
-  padding: 0 26px;
-  height: 60px;
-  display: flex;
-  align-items: center;
-  gap: 14px;
-}
-
-/* ── Login box ── */
-.login-box {
-  width: 100%; max-width: 420px;
-  background: rgba(255,255,255,0.15);
-  
-  
-  border: 1px solid rgba(255,255,255,0.85);
-  border-radius: var(--r-lg);
-  padding: 38px 36px;
-  box-shadow: var(--shadow-md);
-  position: relative;
-  overflow: hidden;
-}
-.login-box > * { position: relative; z-index: 1; }
-
-/* ── Quiz question box ── */
-.q-box {
-  background: var(--surface);
-  
-  
-  border: 1px solid rgba(255,255,255,0.78);
-  border-radius: var(--r-lg);
-  padding: 30px;
-  box-shadow: var(--shadow-md);
-  margin-bottom: 20px;
-  position: relative;
-  overflow: hidden;
-}
-.q-box > * { position: relative; z-index: 1; }
-
-/* ── Notification panel ── */
-.notif-panel {
-  position: fixed; top: 66px; right: 20px; z-index: 500;
-  width: 330px;
-  background: rgba(255,255,255,0.22);
-  
-  
-  border: 1px solid rgba(255,255,255,0.8);
-  border-radius: var(--r-lg);
-  padding: 16px;
-  box-shadow: var(--shadow-md);
-  display: none;
-  overflow: hidden;
-}
-.notif-panel > * { position: relative; z-index: 1; }
-
-
-/* ── as-card (assign cards) ── */
-.as-card {
-  background: var(--surface);
-  
-  
-  border: 1px solid rgba(255,255,255,0.75);
-  border-radius: var(--r-lg);
-  padding: 16px;
-  box-shadow: none;
-  cursor: pointer;
-  transition: all .25s cubic-bezier(0.2, 0, 0.2, 1);
-  position: relative; overflow: hidden;
-}
-.as-card > * { position: relative; z-index: 1; }
-.as-card:hover { border-color: var(--muted); box-shadow: var(--shadow-md); }
-
-/* ── km-node (knowledge map) ── */
-.km-node {
-  background: var(--surface);
-  
-  
-  border: 1px solid rgba(255,255,255,0.72);
-  border-radius: 15px;
-  padding: 13px 9px;
-  text-align: center;
-  cursor: pointer;
-  transition: all .25s cubic-bezier(0.2, 0, 0.2, 1);
-  box-shadow: none;
-  position: relative; overflow: hidden;
-}
-.km-node > * { position: relative; z-index: 1; }
-.km-node:hover { border-color: var(--muted); box-shadow: var(--shadow-md); }
-
-/* ── Toast ── */
-.toast {
-  background: var(--raised);
-  
-  
-  border: 1px solid rgba(255,255,255,0.82);
-  border-radius: 50px;
-  padding: 10px 22px;
-  box-shadow: var(--shadow-md);
-  font-size: .875rem; font-weight: 600; color: var(--text);
-  animation: toastIn .4s cubic-bezier(0.2, 0, 0.2, 1);
-  display: flex; align-items: center; gap: 8px;
-  position: relative; overflow: hidden;
-}
-.toast > * { position: relative; z-index: 1; }
-
-/* ── Tab bar pills ── */
-.tab-bar {
-  display: flex; gap: 2px;
-  background: rgba(94,175,193,.07);
-  border-radius: 50px; padding: 3px;
-  width: fit-content; margin-bottom: 18px;
-  border: 1px solid rgba(255,255,255,0.6);
-  box-shadow: none;
-}
-
-/* ── Sidebar active item ── */
-.si.on {
-  background: var(--surface);
-  
-  
-  border: 1px solid rgba(255,255,255,0.72);
-  color: var(--indigo); font-weight: 600;
-  box-shadow: none;
-}
-
-/* ── Setup box & First-login box ── */
-.setup-box,
-.first-login-box {
-  background: var(--raised);
-  
-  
-  border: 1px solid rgba(255,255,255,0.85);
-  border-radius: var(--r-lg);
-  box-shadow: var(--shadow-md);
-  position: relative; overflow: hidden;
-}
-.setup-box::before,
-.setup-box > *,
-.first-login-box > * { position: relative; z-index: 1; }
-
-/* ── rk-item (ranking rows) ── */
-.rk-item {
-  display: flex; align-items: center; gap: 12px;
-  padding: 11px 14px; border-radius: 13px;
-  background: var(--surface);
-  border: 1px solid rgba(255,255,255,0.72);
-  box-shadow: none;
-  margin-bottom: 7px;
-  transition: all .2s cubic-bezier(0.2, 0, 0.2, 1);
-  position: relative; overflow: hidden;
-}
-.rk-item > * { position: relative; z-index: 1; }
-.rk-item:hover { background: var(--raised); border-color: var(--muted); }
-
-
-/* ── 深色背景文字清晰度強化 ── */
-.sh,.ch,.sc-v,.r-score {
-  text-shadow: 0 1px 12px rgba(0,0,0,0.6), 0 0 32px rgba(0,0,0,0.4);
-}
-.ss,.sc-l,.text-m,td,th,label {
-  text-shadow: 0 1px 6px rgba(0,0,0,0.5);
-}
 
 /* ══════════════════════════════════════════
    JELLY LIQUID GLASS — 果凍透明，背景完全穿透
@@ -880,21 +664,21 @@ hr.dv{border:none;border-top:1px solid rgba(94,175,193,.1);margin:14px 0}
 .prog-t{background:transparent;border-radius:var(--r-lg);height:7px;overflow:hidden}
 
 /* ── table ── */
-thead tr{background:rgba(13,148,136,0.06)}
+thead tr{background:var(--accent-soft)}
 td{border-bottom:1px solid transparent}
-tbody tr:hover td{background:rgba(13,148,136,0.05)}
+tbody tr:hover td{background:var(--accent-soft)}
 
 /* ── upload zone ── */
-.upz{border:2px dashed rgba(13,148,136,0.32);border-radius:var(--r-lg);padding:34px 18px;
-  text-align:center;cursor:pointer;background:rgba(13,148,136,0.04);transition:all .2s}
-.upz:hover{border-color:rgba(20,184,166,0.60);background:rgba(13,148,136,0.08);box-shadow:none}
+.upz{border:2px dashed var(--border-strong);border-radius:var(--r-lg);padding:34px 18px;
+  text-align:center;cursor:pointer;background:var(--accent-soft);transition:all .2s}
+.upz:hover{border-color:var(--accent);background:var(--accent-soft);box-shadow:none}
 
 /* ── notif item ── */
 .notif-item{display:flex;gap:10px;padding:10px;border-radius:var(--r-lg);margin-bottom:6px;
   background:transparent;cursor:pointer;transition:background .2s;
   align-items:flex-start;border:1px solid transparent}
 .notif-item:hover{background:transparent}
-.notif-item.unread{border-left:3px solid rgba(20,184,166,0.65)}
+.notif-item.unread{border-left:3px solid var(--accent)}
 
 /* ── pw-option ── */
 .pw-option{display:flex;align-items:center;gap:12px;padding:14px 16px;border-radius:var(--r-lg);
@@ -924,9 +708,9 @@ tbody tr:hover td{background:rgba(13,148,136,0.05)}
 /* Nav avatar text */
 .nav-av { font-family: var(--font-ui) !important; }
 /* 修正 login-box 內文字顏色（深背景） */
-.login-box .lbl { color: rgba(165,243,252,0.75); }
+.login-box .lbl { color:var(--muted); }
 .login-box .logo-txt { color: var(--accent-soft); font-family: var(--font-display); }
-.login-box .logo-sub { color: rgba(165,243,252,0.65); font-size: .83rem; margin-top: 3px; }
+.login-box .logo-sub { color:var(--faint); font-size: .83rem; margin-top: 3px; }
 
 /* ══════════════════════════════════════
    TOPNAV HOVER DROPDOWN — fixed 定位，不受 overflow 裁切
@@ -956,33 +740,18 @@ tbody tr:hover td{background:rgba(13,148,136,0.05)}
   left: 50%; /* overridden by JS */
   transform: translateX(-50%) translateY(-8px);
   min-width: 168px;
-  background: rgba(4,12,28,0.88);
+  background:var(--raised);
   
   
-  border: 1px solid rgba(255,255,255,0.24);
+  border:1px solid var(--border);
   border-radius: 16px;
   padding: 7px;
-  box-shadow:
-    0 0 0 1px rgba(255,255,255,0.12),
-    -2px 0 16px rgba(6,182,212,0.35),
-     2px 0 16px rgba(14,165,233,0.35),
-     0 16px 48px rgba(0,0,0,0.55),
-     0  2px 10px rgba(8,145,178,0.20),
-    inset 0 1px 0 rgba(255,255,255,0.70);
+  box-shadow: var(--shadow-md);
   opacity: 0;
   visibility: hidden;
   transition: opacity .18s ease, transform .18s cubic-bezier(0.2, 0, 0.2, 1), visibility .18s;
   z-index: 9999;
   pointer-events: none;
-}
-/* Top light line */
-.nav-dropdown::before {
-  content: '';
-  position: absolute;
-  top: 0; left: 10%; right: 10%;
-  height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,.85) 30%, white 50%, rgba(255,255,255,.85) 70%, transparent);
-  border-radius: 1px;
 }
 /* Arrow tip */
 .nav-dropdown::after {
@@ -991,9 +760,9 @@ tbody tr:hover td{background:rgba(13,148,136,0.05)}
   top: -5px; left: 50%;
   transform: translateX(-50%) rotate(45deg);
   width: 10px; height: 10px;
-  background: rgba(4,12,28,0.88);
-  border-left: 1px solid rgba(255,255,255,0.24);
-  border-top: 1px solid rgba(255,255,255,0.24);
+  background:var(--raised);
+  border-left:1px solid var(--border);
+  border-top:1px solid var(--border);
 }
 .nav-dropdown button, .nav-dropdown a {
   display: flex;
@@ -1004,7 +773,7 @@ tbody tr:hover td{background:rgba(13,148,136,0.05)}
   border-radius: 10px;
   border: none;
   background: none;
-  color: rgba(210,205,198,0.82);
+  color:var(--ink);
   font-size: .8rem;
   font-weight: 500;
   font-family: var(--font-ui);
@@ -1018,12 +787,12 @@ tbody tr:hover td{background:rgba(13,148,136,0.05)}
   width: 14px;
   text-align: center;
   font-size: .78rem;
-  color: rgba(142,184,200,0.70);
+  color:var(--muted);
   font-family: 'Font Awesome 6 Free' !important;
   font-weight: 900;
 }
 .nav-dropdown button:hover, .nav-dropdown a:hover {
-  background: rgba(13,148,136,0.18);
+  background: var(--accent-soft);
   color: var(--accent-soft);
 }
 .nav-dropdown button:hover i, .nav-dropdown a:hover i {
@@ -1071,29 +840,29 @@ td { color: var(--ink); }
 a { color: var(--indigo); }
 
 /* ═══════════════ PDF IMPORT ═══════════════ */
-.pdf-dropzone{border:2px dashed rgba(94,175,193,.3);border-radius:16px;padding:40px 20px;text-align:center;
-  cursor:pointer;transition:all .2s;background:rgba(94,175,193,.02)}
-.pdf-dropzone:hover,.pdf-dropzone.dragover{border-color:var(--indigo);background:rgba(94,175,193,.06)}
-.pdf-file-chip{display:inline-flex;align-items:center;gap:6px;background:rgba(94,175,193,.08);
-  border:1px solid rgba(94,175,193,.2);border-radius:var(--r-lg);padding:5px 12px;font-size:.78rem;color:var(--text);margin:3px}
+.pdf-dropzone{border:2px dashed var(--border-strong);border-radius:16px;padding:40px 20px;text-align:center;
+  cursor:pointer;transition:all .2s;background:var(--accent-soft)}
+.pdf-dropzone:hover,.pdf-dropzone.dragover{border-color:var(--indigo);background:var(--accent-soft)}
+.pdf-file-chip{display:inline-flex;align-items:center;gap:6px;background:var(--accent-soft);
+  border:1px solid var(--border);border-radius:var(--r-lg);padding:5px 12px;font-size:.78rem;color:var(--text);margin:3px}
 .pdf-file-chip .fa-xmark{cursor:pointer;opacity:.5;font-size:.7rem}
 .pdf-file-chip .fa-xmark:hover{opacity:1;color:var(--rose)}
 .pdf-progress{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);height:8px;overflow:hidden;margin:6px 0}
 .pdf-progress-bar{height:100%;background:var(--accent);border-radius:var(--r-lg);
   transition:width .3s ease}
 .pdf-q-card{border:1px solid var(--border);border-radius:var(--r-lg);padding:14px;margin-bottom:10px;
-  background:rgba(255,255,255,.02);transition:all .2s}
-.pdf-q-card:hover{border-color:rgba(94,175,193,.3);background:rgba(94,175,193,.03)}
+  background:transparent;transition:all .2s}
+.pdf-q-card:hover{border-color:var(--accent);background:var(--accent-soft)}
 .pdf-q-card .q-num{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;
   border-radius:50%;background:var(--indigo);color:var(--raised);font-size:.72rem;font-weight:700;flex-shrink:0}
 .pdf-q-card .q-content{font-size:.84rem;line-height:1.6;flex:1}
 .pdf-q-card .q-meta{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
-.pdf-q-card .q-tag{font-size:.68rem;padding:2px 8px;border-radius:var(--r-lg);background:rgba(94,175,193,.08);color:var(--text-m)}
+.pdf-q-card .q-tag{font-size:.68rem;padding:2px 8px;border-radius:var(--r-lg);background:var(--accent-soft);color:var(--text-m)}
 .pdf-q-actions{display:flex;gap:6px;margin-top:8px}
 /* ── Question Image ── */
-.q-img{max-width:100%;border-radius:var(--r-lg);margin-top:8px;border:1px solid rgba(255,255,255,.08);cursor:pointer;transition:transform .2s}
+.q-img{max-width:100%;border-radius:var(--r-lg);margin-top:8px;border:1px solid var(--border);cursor:pointer;transition:transform .2s}
 .q-img:hover{transform:scale(1.02)}
-.q-img-thumb{max-height:120px;object-fit:contain;border-radius:var(--r-lg);border:1px solid rgba(255,255,255,.06);margin-top:6px}
+.q-img-thumb{max-height:120px;object-fit:contain;border-radius:var(--r-lg);border:1px solid var(--border);margin-top:6px}
 .q-img-full-ov{position:fixed;inset:0;z-index:9998;background:rgba(0,0,0,.85);display:flex;align-items:center;
   justify-content:center;cursor:zoom-out;padding:20px}
 .q-img-full-ov img{max-width:95vw;max-height:90vh;border-radius:var(--r-lg);box-shadow:0 20px 60px rgba(0,0,0,.6)}
@@ -1103,38 +872,36 @@ a { color: var(--indigo); }
 /* ═══════════════ USER DROPDOWN ═══════════════ */
 .user-dd-wrap{position:relative;display:inline-flex;align-items:center}
 .user-dd{position:fixed;top:56px;right:14px;min-width:260px;z-index:9999;
-  background:rgba(4,12,28,.92);
-  border:1px solid rgba(255,255,255,.22);border-radius:16px;padding:7px;
-  box-shadow:0 0 0 1px rgba(255,255,255,.10),-2px 0 16px rgba(6,182,212,.30),2px 0 16px rgba(14,165,233,.30),0 16px 48px rgba(0,0,0,.55),inset 0 1px 0 rgba(255,255,255,.60);
+  background:var(--raised);
+  border:1px solid var(--border);border-radius:16px;padding:7px;
+  box-shadow:var(--shadow-md);
   opacity:0;visibility:hidden;transform:translateY(-8px);transition:opacity .18s ease,transform .18s cubic-bezier(0.2, 0, 0.2, 1),visibility .18s;pointer-events:none}
 .user-dd.show{opacity:1;visibility:visible;transform:translateY(0);pointer-events:all}
-.user-dd::before{content:'';position:absolute;top:0;left:10%;right:10%;height:1px;
-  background:linear-gradient(90deg,transparent,rgba(255,255,255,.85) 30%,white 50%,rgba(255,255,255,.85) 70%,transparent);border-radius:1px}
 .user-dd::after{content:'';position:absolute;top:-5px;right:18px;width:10px;height:10px;
-  background:rgba(4,12,28,.92);border-left:1px solid rgba(255,255,255,.22);border-top:1px solid rgba(255,255,255,.22);transform:rotate(45deg)}
-.user-dd .dd-hdr{padding:12px 14px;border-bottom:1px solid rgba(255,255,255,.09);margin-bottom:4px}
+  background:var(--raised);border-left:1px solid var(--border);border-top:1px solid var(--border);transform:rotate(45deg)}
+.user-dd .dd-hdr{padding:12px 14px;border-bottom:1px solid var(--border);margin-bottom:4px}
 .user-dd .dd-name{font-size:.88rem;font-weight:600;color:var(--ink)}
 .user-dd .dd-role-tag{display:inline-block;font-size:.65rem;padding:2px 8px;border-radius:var(--r-lg);margin-top:4px;font-weight:600}
-.user-dd .dd-role-tag.student{background:rgba(94,175,193,.15);color:#a5b4fc}
+.user-dd .dd-role-tag.student{background:var(--border);color:#a5b4fc}
 .user-dd .dd-role-tag.teacher{background:rgba(245,158,11,.15);color:var(--warning)}
 .user-dd .dd-role-tag.admin{background:rgba(239,68,68,.15);color:var(--danger)}
-.user-dd .dd-email{font-size:.7rem;color:rgba(142,184,200,.55);margin-top:3px;word-break:break-all}
+.user-dd .dd-email{font-size:.7rem;color:var(--muted);margin-top:3px;word-break:break-all}
 .user-dd .dd-sep{height:1px;background:var(--border);margin:5px 8px}
 .user-dd button{display:flex;align-items:center;gap:9px;width:100%;padding:9px 13px;border-radius:var(--r-lg);
-  border:none;background:none;color:rgba(210,205,198,.82);font-size:.8rem;font-weight:500;
+  border:none;background:none;color:var(--ink);font-size:.8rem;font-weight:500;
   font-family:var(--font-ui);cursor:pointer;transition:background .15s,color .15s;text-align:left;white-space:nowrap}
-.user-dd button i{width:16px;text-align:center;font-size:.78rem;color:rgba(142,184,200,.70);font-family:'Font Awesome 6 Free'!important;font-weight:900}
-.user-dd button:hover{background:rgba(13,148,136,.18);color:var(--accent-soft)}
-.user-dd button:hover i{color:var(--accent-soft)}
-.user-dd .dd-quota{padding:8px 14px;font-size:.72rem;color:rgba(142,184,200,.5)}
+.user-dd button i{width:16px;text-align:center;font-size:.78rem;color:var(--muted);font-family:'Font Awesome 6 Free'!important;font-weight:900}
+.user-dd button:hover{background:var(--accent-soft);color:var(--accent)}
+.user-dd button:hover i{color:var(--accent)}
+.user-dd .dd-quota{padding:8px 14px;font-size:.72rem;color:var(--muted)}
 .user-dd .dd-quota-bar{height:4px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-sm);margin-top:4px;overflow:hidden}
 .user-dd .dd-quota-fill{height:100%;border-radius:var(--r-sm);background:var(--accent);transition:width .3s}
 
 /* ═══════════════ API KEY MODAL ═══════════════ */
-.api-provider-tabs{display:flex;gap:4px;margin-bottom:14px;background:rgba(94,175,193,.05);border-radius:var(--r-lg);padding:3px}
+.api-provider-tabs{display:flex;gap:4px;margin-bottom:14px;background:var(--accent-soft);border-radius:var(--r-lg);padding:3px}
 .api-provider-tab{flex:1;padding:8px;border-radius:var(--r-lg);border:none;background:none;cursor:pointer;
   font-size:.78rem;font-weight:600;color:var(--text-l);font-family:inherit;transition:all .2s;text-align:center}
-.api-provider-tab.on{background:var(--accent);color:var(--raised);box-shadow:0 2px 8px rgba(94,175,193,.3)}
+.api-provider-tab.on{background:var(--accent);color:var(--raised);box-shadow:none}
 .api-provider-tab i{margin-right:4px}
 .api-key-input-wrap{position:relative}
 .api-key-input-wrap .inp{padding-right:36px}
@@ -1158,7 +925,7 @@ a { color: var(--indigo); }
 .gas-how-to ol { margin:0; padding-left:1.2rem; font-size:.79rem; color:var(--text-m); line-height:1.9; }
 .gas-code-area {
   background:#161624; border-radius:var(--r-lg); overflow:hidden;
-  border:1px solid rgba(255,255,255,.07); margin-bottom:14px;
+  border:1px solid var(--border); margin-bottom:14px;
 }
 .gas-code-label {
   background:#1e1e32; color:var(--text-m); font-size:.72rem;
@@ -1191,7 +958,7 @@ a { color: var(--indigo); }
   font-size:.68rem; font-weight:700; padding:.12rem .5rem;
   border-radius:var(--r-lg); white-space:nowrap;
 }
-.gas-badge-mc  { background:rgba(94,175,193,.15); color:#818cf8; }
+.gas-badge-mc  { background:var(--border); color:#818cf8; }
 .gas-badge-tf  { background:rgba(234,179,8,.15);  color:var(--warning); }
 .gas-badge-grp { background:rgba(14,165,233,.15); color:var(--accent); }
 .gas-badge-img { background:rgba(244,63,94,.12);  color:var(--rose); }
@@ -1218,14 +985,14 @@ a { color: var(--indigo); }
 }
 /* ── GAS 圖片上傳步驟 ── */
 .gas-img-upload-box {
-  border:2px dashed rgba(94,175,193,.3); border-radius:.75rem;
+  border:2px dashed var(--border-strong); border-radius:.75rem;
   padding:1.5rem; text-align:center; cursor:pointer;
   transition:border-color .2s, background .2s;
-  background:rgba(94,175,193,.03);
+  background:var(--accent-soft);
 }
 .gas-img-upload-box:hover,
 .gas-img-upload-box.dragover {
-  border-color:var(--indigo); background:rgba(94,175,193,.07);
+  border-color:var(--indigo); background:var(--accent-soft);
 }
 .gas-img-upload-box i  { font-size:2rem; color:var(--indigo); opacity:.55; display:block; margin-bottom:8px; }
 .gas-img-upload-box p  { font-size:.85rem; color:var(--text-m); margin:0 0 4px; }
@@ -1312,7 +1079,7 @@ a { color: var(--indigo); }
 
   <div id="sw-1" class="setup-step on">
     <div class="ch mb3" style="font-size:1.1rem">① 填入 Supabase 設定</div>
-    <div style="background:var(--i-s);border:1px solid rgba(94,175,193,.2);border-radius:var(--r-lg);padding:12px 14px;margin-bottom:16px;font-size:.82rem;line-height:1.75;color:var(--text-m)">
+    <div style="background:var(--i-s);border:1px solid var(--border);border-radius:var(--r-lg);padding:12px 14px;margin-bottom:16px;font-size:.82rem;line-height:1.75;color:var(--text-m)">
       📋 <strong style="color:var(--indigo)">取得步驟：</strong><br>
       1. 前往 <a href="https://supabase.com" target="_blank" style="color:var(--sky)">supabase.com</a> → 免費建立帳號<br>
       2. 點擊「New Project」→ 輸入名稱 → 設定密碼 → 建立<br>
@@ -1352,7 +1119,7 @@ a { color: var(--indigo); }
       3. 把下方所有 SQL 貼入 → 點擊右上角「Run」<br>
       4. 看到「Success」後回來點「完成設定」
     </div>
-    <div style="background:rgba(30,27,75,.06);border:1px solid rgba(94,175,193,.15);border-radius:var(--r-lg);padding:12px;margin-bottom:14px;max-height:200px;overflow-y:auto;font-family:monospace;font-size:.72rem;color:var(--text-m);line-height:1.6;white-space:pre-wrap" id="sql-preview">載入中...</div>
+    <div style="background:var(--accent-soft);border:1px solid var(--border);border-radius:var(--r-lg);padding:12px;margin-bottom:14px;max-height:200px;overflow-y:auto;font-family:monospace;font-size:.72rem;color:var(--text-m);line-height:1.6;white-space:pre-wrap" id="sql-preview">載入中...</div>
     <div style="display:flex;gap:8px;margin-bottom:14px">
       <button class="btn btn-p btn-sm" onclick="copySQL()"><i class="fa fa-copy"></i> 複製 SQL</button>
       <button class="btn btn-g btn-sm" onclick="showStep(2)">← 上一步</button>
@@ -1886,12 +1653,12 @@ a { color: var(--indigo); }
                 <input class="inp" id="asgn-due" type="datetime-local"/></div>
             </div>
             <div class="iw">
-              <label class="lbl" style="color:rgba(251,191,36,0.85)"><i class="fa fa-envelope-open-text"></i> 學生截止前提醒 Email</label>
+              <label class="lbl" style="color:var(--warning)"><i class="fa fa-envelope-open-text"></i> 學生截止前提醒 Email</label>
               <div style="display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:var(--r-lg);background:rgba(245,158,11,0.06);border:1px solid rgba(245,158,11,0.22)">
                 <label class="tog"><input type="checkbox" id="ne-student-remind" checked><span class="tog-s"></span></label>
                 <div>
-                  <div style="font-size:.84rem;color:rgba(165,243,252,0.9)">未繳交學生截止前提醒</div>
-                  <div style="font-size:.74rem;color:rgba(150,145,140,0.65);margin-top:2px">在截止前
+                  <div style="font-size:.84rem;color:var(--ink)">未繳交學生截止前提醒</div>
+                  <div style="font-size:.74rem;color:var(--faint);margin-top:2px">在截止前
                     <select class="inp" id="ne-student-remind-hours" style="display:inline-block;width:auto;padding:2px 8px;font-size:.78rem;margin:0 4px">
                       <option value="24" selected>24 小時</option>
                       <option value="48">48 小時</option>
@@ -2296,7 +2063,7 @@ a { color: var(--indigo); }
       </div></div>
     <div class="iw"><label class="lbl">電子信箱（選填）</label><input id="as-email" class="inp" type="email" placeholder="留空則由學生首次登入時自行填寫"/>
       <div style="font-size:.72rem;color:var(--text-l);margin-top:3px">若不填寫，學生首次登入時系統會要求輸入</div></div>
-    <div style="background:var(--i-s);border:1px solid rgba(94,175,193,.2);border-radius:var(--r-lg);padding:10px 14px;margin-bottom:14px;font-size:.78rem;color:var(--text-m);line-height:1.7">
+    <div style="background:var(--i-s);border:1px solid var(--border);border-radius:var(--r-lg);padding:10px 14px;margin-bottom:14px;font-size:.78rem;color:var(--text-m);line-height:1.7">
       💡 <strong>帳號規則：</strong>登入帳號 = 學號，密碼 = 民國出生年月日（7碼）<br>
       學生首次登入時，系統會引導確認信箱並設定密碼。
     </div>
@@ -2355,7 +2122,7 @@ a { color: var(--indigo); }
 <div class="first-login-box" style="max-width:480px">
   <div class="logo-txt">EduFlow</div>
   <div style="font-size:.88rem;color:var(--text-m);margin-bottom:22px">首次登入 — 帳號安全設定</div>
-  <div style="background:var(--i-s);border:1px solid rgba(94,175,193,.2);border-radius:var(--r-lg);padding:14px;margin-bottom:20px;font-size:.84rem;text-align:left;line-height:1.8;color:var(--text-m)">
+  <div style="background:var(--i-s);border:1px solid var(--border);border-radius:var(--r-lg);padding:14px;margin-bottom:20px;font-size:.84rem;text-align:left;line-height:1.8;color:var(--text-m)">
     👋 歡迎你，<strong id="fl-student-name" style="color:var(--text)"></strong>！<br>
     這是你的第一次登入，請完成以下設定後開始使用系統。
   </div>
@@ -2550,7 +2317,7 @@ a { color: var(--indigo); }
               <div style="font-weight:700;margin-bottom:4px;color:var(--amber)">教師</div>
               <div style="font-size:.78rem;color:var(--text-m);line-height:1.7">出題、派題、管理自己的學生、查看班級數據、審核題目</div>
             </div>
-            <div style="padding:16px;background:rgba(94,175,193,.06);border:1px solid rgba(94,175,193,.15);border-radius:var(--r-lg)">
+            <div style="padding:16px;background:var(--accent-soft);border:1px solid var(--border);border-radius:var(--r-lg)">
               <div style="font-size:1.3rem;margin-bottom:6px">👩‍🎓</div>
               <div style="font-weight:700;margin-bottom:4px;color:var(--indigo)">學生</div>
               <div style="font-size:.78rem;color:var(--text-m);line-height:1.7">作答測驗、查看成績、練習錯題、檢視學習進度</div>
@@ -2625,7 +2392,7 @@ a { color: var(--indigo); }
     <div class="modal-title">📄 下載成績單</div>
     <button class="btn btn-g btn-ico" onclick="closeModal('result-dl-modal')"><i class="fa fa-xmark"></i></button>
   </div>
-  <div id="result-dl-preview" style="background:rgba(94,175,193,.05);border:1px solid rgba(94,175,193,.12);border-radius:var(--r-lg);padding:16px;margin-bottom:16px;font-size:.85rem;line-height:1.9"></div>
+  <div id="result-dl-preview" style="background:var(--accent-soft);border:1px solid var(--border);border-radius:var(--r-lg);padding:16px;margin-bottom:16px;font-size:.85rem;line-height:1.9"></div>
   <div style="display:flex;gap:8px">
     <button class="btn btn-p btn-block" onclick="doDownloadResult()"><i class="fa fa-download"></i> 下載 CSV</button>
   </div>
@@ -2683,7 +2450,7 @@ a { color: var(--indigo); }
     <div class="modal-title"><i class="fa fa-layer-group" style="color:var(--accent)"></i> 自訂分組管理</div>
     <button class="btn btn-g btn-ico" onclick="closeModal('custom-group-modal')"><i class="fa fa-xmark"></i></button>
   </div>
-  <div style="font-size:.82rem;color:rgba(185,180,175,0.70);margin-bottom:16px">
+  <div style="font-size:.82rem;color:var(--muted);margin-bottom:16px">
     為「<span id="cg-class-name" style="color:var(--muted);font-weight:600"></span>」建立自訂分組，可手動勾選學生加入
   </div>
 
@@ -2691,7 +2458,7 @@ a { color: var(--indigo); }
   <div id="cg-groups-list" style="margin-bottom:16px"></div>
 
   <!-- 新增分組 -->
-  <div style="padding:14px;border-radius:14px;background:rgba(13,148,136,0.06);border:1px solid rgba(20,184,166,0.20)">
+  <div style="padding:14px;border-radius:14px;background:var(--accent-soft);border:1px solid var(--border)">
     <div style="font-size:.85rem;font-weight:600;color:var(--muted);margin-bottom:10px"><i class="fa fa-plus-circle"></i> 新增分組</div>
     <div class="g2" style="gap:10px;margin-bottom:10px">
       <div class="iw" style="margin:0"><input class="inp" id="cg-new-name" placeholder="分組名稱（如：第一組）"/></div>
@@ -2706,8 +2473,8 @@ a { color: var(--indigo); }
       </div>
     </div>
     <!-- 學生多選 -->
-    <div style="font-size:.78rem;color:rgba(185,180,175,0.70);margin-bottom:8px">選擇加入此分組的學生：</div>
-    <div id="cg-student-checkboxes" style="max-height:180px;overflow-y:auto;display:grid;grid-template-columns:1fr 1fr;gap:6px;padding:8px;background:transparent;border-radius:var(--r-lg);border:1px solid rgba(255,255,255,0.12)"></div>
+    <div style="font-size:.78rem;color:var(--muted);margin-bottom:8px">選擇加入此分組的學生：</div>
+    <div id="cg-student-checkboxes" style="max-height:180px;overflow-y:auto;display:grid;grid-template-columns:1fr 1fr;gap:6px;padding:8px;background:transparent;border-radius:var(--r-lg);border:1px solid var(--border)"></div>
     <button class="btn btn-p btn-sm w100 mt3" onclick="addCustomGroup()"><i class="fa fa-check"></i> 建立分組</button>
   </div>
 </div>
@@ -3129,7 +2896,7 @@ a { color: var(--indigo); }
   </div>
 
   <div class="dd-sep"></div>
-  <button onclick="doLogout()" style="color:rgba(239,68,68,.8)"><i class="fa fa-right-from-bracket" style="color:rgba(239,68,68,.6)"></i> 登出</button>
+  <button onclick="doLogout()" style="color:var(--danger)"><i class="fa fa-right-from-bracket" style="color:var(--danger)"></i> 登出</button>
 </div>
 
 <!-- ═══════════════ API Key Settings Modal ═══════════════ -->
@@ -3140,7 +2907,7 @@ a { color: var(--indigo); }
     <button class="btn btn-g btn-ico" onclick="closeModal('apikey-modal')"><i class="fa fa-xmark"></i></button>
   </div>
 
-  <div style="background:rgba(94,175,193,.04);border:1px solid rgba(94,175,193,.15);border-radius:var(--r-lg);padding:12px 14px;margin-bottom:16px;font-size:.78rem;color:var(--text-m);line-height:1.7">
+  <div style="background:var(--accent-soft);border:1px solid var(--border);border-radius:var(--r-lg);padding:12px 14px;margin-bottom:16px;font-size:.78rem;color:var(--text-m);line-height:1.7">
     <i class="fa fa-info-circle" style="color:var(--indigo)"></i>
     <strong>什麼時候需要自己的 API Key？</strong><br>
     系統內建 AI 提供每日 <strong style="color:var(--indigo)">20 次</strong>免費額度，適用於：學習建議、簡易出題、錯題解析。<br>
@@ -3235,7 +3002,7 @@ a { color: var(--indigo); }
   <div class="iw" id="pf-class-wrap"><label class="lbl">目前班級</label>
     <select class="inp" id="pf-class"><option value="">— 未分配 —</option></select></div>
 
-  <div style="background:rgba(94,175,193,.04);border:1px solid rgba(94,175,193,.12);border-radius:var(--r-lg);padding:10px 14px;margin-bottom:14px;font-size:.78rem;color:var(--text-m);line-height:1.7">
+  <div style="background:var(--accent-soft);border:1px solid var(--border);border-radius:var(--r-lg);padding:10px 14px;margin-bottom:14px;font-size:.78rem;color:var(--text-m);line-height:1.7">
     <i class="fa fa-shield-halved" style="color:var(--indigo)"></i>
     身份：<strong id="pf-role-display">—</strong>　｜　學號：<strong id="pf-number-display">—</strong>
   </div>
@@ -4478,7 +4245,7 @@ function renderErrorList(items) {
           <div class="math-txt" style="font-size:.92rem;line-height:1.7;margin-bottom:8px">${mathHTML(q.content)}</div>
           <div style="font-size:.82rem;color:var(--rose)"><i class="fa fa-circle-xmark"></i> 你的答案：${w.selected_option}</div>
           <div style="font-size:.82rem;color:var(--emerald);margin-top:2px"><i class="fa fa-check-circle"></i> 正確答案：${q.answer}</div>
-          ${q.explanation?`<div style="font-size:.8rem;color:var(--text-m);margin-top:6px;padding:8px;background:rgba(94,175,193,.05);border-radius:var(--r-lg)">💡 ${q.explanation}</div>`:''}
+          ${q.explanation?`<div style="font-size:.8rem;color:var(--text-m);margin-top:6px;padding:8px;background:var(--accent-soft);border-radius:var(--r-lg)">💡 ${q.explanation}</div>`:''}
         </div>
         <button class="btn btn-p btn-sm" style="flex-shrink:0;margin-left:10px" onclick="practiceQuestion('${w.question_id}')"><i class="fa fa-rotate-right"></i></button>
       </div>
@@ -4851,7 +4618,7 @@ function showResultPage(qs, answers, score, correct, timeSpent) {
   const m = Math.floor(timeSpent/60), s = timeSpent%60;
   document.getElementById('res-time').textContent = `${m}:${String(s).padStart(2,'0')}`;
   const grade = score>=90?{t:'優秀 🏆',bg:'rgba(16,185,129,.12)',c:'var(--emerald)',bd:'rgba(16,185,129,.25)'}:
-               score>=80?{t:'良好 👍',bg:'rgba(94,175,193,.1)',c:'var(--indigo)',bd:'rgba(94,175,193,.22)'}:
+               score>=80?{t:'良好 👍',bg:'var(--accent-soft)',c:'var(--indigo)',bd:'var(--border)'}:
                score>=60?{t:'合格 📚',bg:'rgba(245,158,11,.1)',c:'var(--amber)',bd:'rgba(245,158,11,.22)'}:
                {t:'需加強 💪',bg:'rgba(244,63,94,.1)',c:'var(--rose)',bd:'rgba(244,63,94,.22)'};
   const gradeEl = document.getElementById('res-grade');
@@ -4975,7 +4742,7 @@ async function loadTeacherDash() {
   if (rvEl) rvEl.innerHTML = (recentExams||[]).map(e=>{
     const statusLabel = {draft:'草稿',ready:'已完成',assigned:'已派發'}[e.status]||'草稿';
     const statusCls = {draft:'ca',ready:'ce',assigned:'ci'}[e.status]||'ca';
-    return `<div style="padding:10px;background:rgba(94,175,193,.05);border-radius:var(--r-md);margin-bottom:8px;font-size:.84rem">
+    return `<div style="padding:10px;background:var(--accent-soft);border-radius:var(--r-md);margin-bottom:8px;font-size:.84rem">
       <div class="fx ai-c g2x mb2"><span class="chip ${statusCls}">${statusLabel}</span><span class="chip cg">${e.subject||'數學'}</span></div>
       <div style="font-weight:600;margin-bottom:4px">${e.name}</div>
       <div style="font-size:.78rem;color:var(--text-m)">${e.description||''}</div>
@@ -5044,9 +4811,9 @@ async function loadQuestionBank() {
       ? `<img class="q-img-thumb" src="${q.image_data}" onclick="event.stopPropagation();viewFullImage(this.src)" alt="附圖" title="點擊放大">`
       : '';
     const figBadge = q.figure_desc
-      ? `<span class="chip" style="background:rgba(6,182,212,.08);border-color:rgba(6,182,212,.2);color:var(--cyan);font-size:.65rem"><i class="fa fa-image"></i> ${q.figure_desc.substring(0,15)}</span>`
+      ? `<span class="chip" style="background:var(--accent-soft);border-color:var(--border);color:var(--cyan);font-size:.65rem"><i class="fa fa-image"></i> ${q.figure_desc.substring(0,15)}</span>`
       : '';
-    return `<div class="rv-item" id="qb-${q.id}" style="cursor:pointer;${isSelected?'border-left:3px solid var(--indigo);background:rgba(94,175,193,.06)':''}" onclick="toggleQBSelect('${q.id}')">
+    return `<div class="rv-item" id="qb-${q.id}" style="cursor:pointer;${isSelected?'border-left:3px solid var(--indigo);background:var(--accent-soft)':''}" onclick="toggleQBSelect('${q.id}')">
       <div class="fx ai-c g2x mb2 wr">
         <input type="checkbox" ${isSelected?'checked':''} onclick="event.stopPropagation();toggleQBSelect('${q.id}')" style="accent-color:var(--indigo)">
         <span class="chip ci">${q.publisher||q.subject||'未分類'}</span>
@@ -5067,7 +4834,7 @@ async function loadQuestionBank() {
       <div class="math-txt" style="font-size:.88rem">${mathHTML(q.content)}</div>
       ${imgHtml}
       ${q.options?.length?`<div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;font-size:.78rem;margin-top:6px">
-        ${q.options.map(o=>`<div class="math-txt" style="padding:3px 8px;border-radius:var(--r-md);background:${o.key===q.answer?'var(--e-s)':'rgba(94,175,193,.04)'}">${o.key?'<b>'+o.key+'.</b> ':''}${mathHTML(o.text||o)}</div>`).join('')}
+        ${q.options.map(o=>`<div class="math-txt" style="padding:3px 8px;border-radius:var(--r-md);background:${o.key===q.answer?'var(--e-s)':'var(--accent-soft)'}">${o.key?'<b>'+o.key+'.</b> ':''}${mathHTML(o.text||o)}</div>`).join('')}
       </div>`:''}
     </div>`;
   }).join('');
@@ -5084,7 +4851,7 @@ function toggleQBSelect(qid) {
     const isSel = APP.qbSelected.has(qid);
     if (cb) cb.checked = isSel;
     el.style.borderLeft = isSel ? '3px solid var(--indigo)' : '';
-    el.style.background = isSel ? 'rgba(94,175,193,.06)' : '';
+    el.style.background = isSel ? 'var(--accent-soft)' : '';
   }
   updateQBSelectionUI();
 }
@@ -5111,7 +4878,7 @@ function qbSelectAll() {
     const id = el.id.replace('qb-', '');
     APP.qbSelected.add(id);
     el.style.borderLeft = '3px solid var(--indigo)';
-    el.style.background = 'rgba(94,175,193,.06)';
+    el.style.background = 'var(--accent-soft)';
     const cb = el.querySelector('input[type=checkbox]');
     if (cb) cb.checked = true;
   });
@@ -5595,7 +5362,7 @@ function renderParsedPreview() {
       : '';
 
     const figBadge = q.has_figure
-      ? `<span class="q-tag" style="background:rgba(6,182,212,.1);color:var(--cyan)"><i class="fa fa-image" style="font-size:.55rem"></i> 附圖${q.figure_desc ? '：'+q.figure_desc.substring(0,20) : ''}</span>`
+      ? `<span class="q-tag" style="background:var(--accent-soft);color:var(--cyan)"><i class="fa fa-image" style="font-size:.55rem"></i> 附圖${q.figure_desc ? '：'+q.figure_desc.substring(0,20) : ''}</span>`
       : '';
 
     return `<div class="pdf-q-card" id="pdf-q-${i}">
@@ -6065,7 +5832,7 @@ async function loadActiveAssignments() {
         </div>`;
       }
 
-      assignHtml.push(`<div style="padding:12px;background:rgba(94,175,193,.05);border-radius:11px;margin-bottom:8px">
+      assignHtml.push(`<div style="padding:12px;background:var(--accent-soft);border-radius:11px;margin-bottom:8px">
         <div class="fx g2x mb2 wr"><span class="chip ci" style="font-size:.62rem">${className}</span>
           <span class="chip ${isOverdue?'cr':'ca'}" style="font-size:.62rem">${isOverdue?'已截止':'截止 '+due}</span>
           <span class="chip cg" style="font-size:.62rem">${grpMap[a.target_group]||a.target_group}</span>
@@ -6125,7 +5892,7 @@ async function showAssignReport(assignId) {
   window._currentAssignReport = report; // 存給寄信用
 
   el.innerHTML = `
-    <div style="background:var(--i-s);border:1px solid rgba(94,175,193,.2);border-radius:var(--r-lg);padding:14px;margin-bottom:14px">
+    <div style="background:var(--i-s);border:1px solid var(--border);border-radius:var(--r-lg);padding:14px;margin-bottom:14px">
       <div style="font-weight:700;font-size:1rem;margin-bottom:4px">${report.assignName}</div>
       <div style="font-size:.82rem;color:var(--text-m)">班級：${report.className} ｜ 截止：${report.deadline}</div>
     </div>
@@ -7718,10 +7485,10 @@ async function loadStudentsForGrouping(classId) {
     .select('id,name,student_number').eq('role','student').eq('class_id',classId).order('name');
   const el = document.getElementById('cg-student-checkboxes');
   el.innerHTML = (students||[]).map(s => `
-    <label style="display:flex;align-items:center;gap:7px;padding:6px 8px;border-radius:var(--r-lg);cursor:pointer;background:transparent;border:1px solid rgba(255,255,255,0.10);font-size:.8rem;color:rgba(220,215,208,0.85)">
+    <label style="display:flex;align-items:center;gap:7px;padding:6px 8px;border-radius:var(--r-lg);cursor:pointer;background:transparent;border:1px solid var(--border);font-size:.8rem;color:var(--ink)">
       <input type="checkbox" value="${s.id}" data-name="${s.name}" style="accent-color:var(--accent)">
       <span>${s.name}</span>
-      <span style="color:rgba(130,128,125,0.60);font-size:.72rem">${s.student_number||''}</span>
+      <span style="color:var(--faint);font-size:.72rem">${s.student_number||''}</span>
     </label>`).join('');
 }
 
@@ -7729,7 +7496,7 @@ async function loadCustomGroups(classId) {
   const stored = JSON.parse(localStorage.getItem(`custom_groups_${classId}`) || '[]');
   const el = document.getElementById('cg-groups-list');
   if (!stored.length) {
-    el.innerHTML = '<div style="color:rgba(130,128,125,0.60);font-size:.82rem;padding:8px 0">尚無自訂分組</div>';
+    el.innerHTML = '<div style="color:var(--faint);font-size:.82rem;padding:8px 0">尚無自訂分組</div>';
     return;
   }
   const colorMap = { teal:'rgba(13,148,136,', sky:'rgba(14,165,233,', amber:'rgba(245,158,11,', rose:'rgba(244,63,94,', violet:'rgba(139,92,246,' };
@@ -7738,10 +7505,10 @@ async function loadCustomGroups(classId) {
     return `<div style="padding:12px 14px;border-radius:var(--r-lg);background:${c}0.08);border:1px solid ${c}0.28);margin-bottom:8px">
       <div class="fx ai-c jb">
         <div>
-          <div style="font-weight:700;font-size:.9rem;color:rgba(220,215,208,0.92)">${g.name}
-            <span style="font-size:.72rem;font-weight:400;color:rgba(150,145,140,0.65);margin-left:6px">${g.members.length} 人</span>
+          <div style="font-weight:700;font-size:.9rem;color:var(--ink)">${g.name}
+            <span style="font-size:.72rem;font-weight:400;color:var(--faint);margin-left:6px">${g.members.length} 人</span>
           </div>
-          <div style="font-size:.78rem;color:rgba(165,160,155,0.68);margin-top:3px">${g.members.join('、') || '（無成員）'}</div>
+          <div style="font-size:.78rem;color:var(--muted);margin-top:3px">${g.members.join('、') || '（無成員）'}</div>
         </div>
         <div class="fx g2x">
           <button class="btn btn-g btn-sm" onclick="editCustomGroup(${i})"><i class="fa fa-pen"></i></button>
