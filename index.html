@@ -1916,6 +1916,8 @@ a { color: var(--indigo); }
           <button class="btn btn-g btn-sm" id="fill-img-btn" onclick="openFillImagesModal()" style="display:none">
             <i class="fa fa-image" style="color:var(--warning)"></i> 填補圖片 <span id="fill-img-badge" class="gas-badge gas-badge-img" style="margin-left:2px"></span>
           </button>
+          <button class="btn btn-g btn-sm" onclick="scanDuplicates()"><i class="fa fa-clone"></i> 掃描重複題</button>
+          <button class="btn btn-g btn-sm" onclick="runQualityCheck()"><i class="fa fa-shield-halved"></i> 品質檢查</button>
         </div>
         <div class="fx ai-c jb mb3" style="flex-wrap:wrap;gap:8px">
           <div style="font-size:.82rem;color:var(--text-m)">
@@ -1930,6 +1932,9 @@ a { color: var(--indigo); }
             </button>
             <button class="btn btn-p btn-sm" id="qb-add-to-exam" style="display:none" onclick="addSelectedToExam()">
               <i class="fa fa-plus"></i> 加入試卷
+            </button>
+            <button class="btn btn-g btn-sm" id="qb-batch-edit-btn" onclick="openBatchEditModal()" style="display:none">
+              <i class="fa fa-pen-to-square"></i> 批次編輯
             </button>
             <button class="btn btn-r btn-sm" id="qb-delete-selected-btn" onclick="qbDeleteSelected()" style="display:none">
               <i class="fa fa-trash"></i> 刪除已選（<span id="qb-delete-count">0</span>）
@@ -2626,6 +2631,132 @@ a { color: var(--indigo); }
     <button class="btn btn-g" onclick="closeModal('qb-edit-modal')"><i class="fa fa-xmark"></i> 取消</button>
     <button class="btn btn-p" style="flex:1" onclick="qbSaveEdit()"><i class="fa fa-floppy-disk"></i> 儲存變更</button>
   </div>
+</div>
+</div>
+
+<!-- ═══════════════ 批次編輯欄位 Modal ═══════════════ -->
+<div id="qb-batch-edit-modal" class="modal-ov">
+<div class="modal-box" style="max-width:620px;max-height:90vh;overflow-y:auto">
+  <div class="modal-hdr">
+    <div class="modal-title"><i class="fa fa-pen-to-square" style="color:var(--indigo)"></i> 批次編輯題目欄位</div>
+    <button class="btn btn-g btn-ico" onclick="closeModal('qb-batch-edit-modal')"><i class="fa fa-xmark"></i></button>
+  </div>
+
+  <div class="iw mb4" style="background:var(--accent-soft);border:1px solid var(--border);border-radius:var(--r-md);padding:10px 12px">
+    <div style="font-size:.78rem;color:var(--text-m);margin-bottom:6px;font-weight:600">作用範圍</div>
+    <label style="display:flex;align-items:center;gap:8px;font-size:.85rem;cursor:pointer;margin-bottom:4px">
+      <input type="radio" name="bem-scope" id="bem-scope-selected" value="selected" onchange="updateBatchEditApplyBtn()" style="accent-color:var(--indigo)">
+      只修改已勾選的 <b id="bem-selected-count">0</b> 題
+    </label>
+    <label style="display:flex;align-items:center;gap:8px;font-size:.85rem;cursor:pointer">
+      <input type="radio" name="bem-scope" id="bem-scope-filter" value="filter" onchange="updateBatchEditApplyBtn()" style="accent-color:var(--rose)">
+      <span style="color:var(--rose)">⚠ 修改目前篩選條件下全部 <b id="bem-filter-count">0</b> 題</span>
+    </label>
+  </div>
+
+  <div style="font-size:.78rem;color:var(--text-m);margin-bottom:6px;font-weight:600">要修改的欄位（左側勾選後才會被異動）</div>
+
+  <div class="g2 mb3" style="gap:10px">
+    <label class="iw" style="margin:0;display:flex;flex-direction:column;gap:4px">
+      <span style="display:flex;align-items:center;gap:6px;font-size:.78rem;color:var(--text-m)">
+        <input type="checkbox" id="bem-ck-publisher" onchange="updateBatchEditApplyBtn()" style="accent-color:var(--indigo)"> 出版社
+      </span>
+      <select class="inp" id="bem-val-publisher">
+        <option value="康軒">康軒</option><option value="翰林">翰林</option>
+        <option value="南一">南一</option><option value="自訂">自訂</option>
+      </select>
+    </label>
+    <label class="iw" style="margin:0;display:flex;flex-direction:column;gap:4px">
+      <span style="display:flex;align-items:center;gap:6px;font-size:.78rem;color:var(--text-m)">
+        <input type="checkbox" id="bem-ck-subject" onchange="updateBatchEditApplyBtn()" style="accent-color:var(--indigo)"> 科目
+      </span>
+      <input class="inp" id="bem-val-subject" placeholder="例：數學"/>
+    </label>
+  </div>
+
+  <div class="g2 mb3" style="gap:10px">
+    <label class="iw" style="margin:0;display:flex;flex-direction:column;gap:4px">
+      <span style="display:flex;align-items:center;gap:6px;font-size:.78rem;color:var(--text-m)">
+        <input type="checkbox" id="bem-ck-unit" onchange="updateBatchEditApplyBtn()" style="accent-color:var(--indigo)"> 單元 / 知識點
+      </span>
+      <input class="inp" id="bem-val-unit" placeholder="例：二次函數"/>
+    </label>
+    <label class="iw" style="margin:0;display:flex;flex-direction:column;gap:4px">
+      <span style="display:flex;align-items:center;gap:6px;font-size:.78rem;color:var(--text-m)">
+        <input type="checkbox" id="bem-ck-diff" onchange="updateBatchEditApplyBtn()" style="accent-color:var(--indigo)"> 難度
+      </span>
+      <select class="inp" id="bem-val-diff">
+        <option value="easy">易</option><option value="medium" selected>中</option><option value="hard">難</option>
+      </select>
+    </label>
+  </div>
+
+  <label class="iw mb4" style="margin:0;display:flex;flex-direction:column;gap:4px">
+    <span style="display:flex;align-items:center;gap:6px;font-size:.78rem;color:var(--text-m)">
+      <input type="checkbox" id="bem-ck-status" onchange="updateBatchEditApplyBtn()" style="accent-color:var(--indigo)"> 審核狀態
+    </span>
+    <select class="inp" id="bem-val-status">
+      <option value="approved">approved（公開）</option>
+      <option value="draft">draft（草稿）</option>
+    </select>
+  </label>
+
+  <div id="bem-summary" style="font-size:.8rem;color:var(--text-m);background:var(--glass);border:1px solid var(--border);border-radius:var(--r-md);padding:10px 12px;margin-top:8px;margin-bottom:14px">
+    請至少勾選一個要修改的欄位
+  </div>
+
+  <div style="display:flex;gap:8px;border-top:1px solid var(--border);padding-top:14px">
+    <button class="btn btn-g" onclick="closeModal('qb-batch-edit-modal')"><i class="fa fa-xmark"></i> 取消</button>
+    <button class="btn btn-p" id="bem-apply-btn" style="flex:1" onclick="applyBatchEdit()" disabled><i class="fa fa-check"></i> 套用</button>
+  </div>
+</div>
+</div>
+
+<!-- ═══════════════ 重複題掃描進度 Modal ═══════════════ -->
+<div id="qb-dup-scan-progress-modal" class="modal-ov">
+<div class="modal-box" style="max-width:440px">
+  <div class="modal-hdr">
+    <div class="modal-title"><i class="fa fa-magnifying-glass" style="color:var(--indigo)"></i> 正在掃描重複題</div>
+  </div>
+  <div style="text-align:center;padding:20px 0">
+    <div style="font-size:2.4rem;color:var(--indigo);margin-bottom:14px">
+      <i class="fa fa-circle-notch fa-spin"></i>
+    </div>
+    <div id="dup-scan-status" style="font-size:.88rem;color:var(--text-m)">準備中...</div>
+    <div id="dup-scan-detail" style="font-size:.78rem;color:var(--text-l);margin-top:8px"></div>
+  </div>
+</div>
+</div>
+
+<!-- ═══════════════ 重複題結果 Modal ═══════════════ -->
+<div id="qb-dup-result-modal" class="modal-ov">
+<div class="modal-box" style="max-width:920px;max-height:92vh;overflow-y:auto">
+  <div class="modal-hdr">
+    <div class="modal-title"><i class="fa fa-clone" style="color:var(--indigo)"></i> 重複題掃描結果</div>
+    <button class="btn btn-g btn-ico" onclick="closeModal('qb-dup-result-modal')"><i class="fa fa-xmark"></i></button>
+  </div>
+  <div id="dup-result-summary" style="font-size:.85rem;color:var(--text-m);margin-bottom:10px"></div>
+  <div class="fx g2x mb3" style="flex-wrap:wrap">
+    <button class="btn btn-p btn-sm" onclick="applyDupSuggestion()"><i class="fa fa-wand-magic-sparkles"></i> 套用建議保留</button>
+    <button class="btn btn-g btn-sm" onclick="applyDupCustom()"><i class="fa fa-hand-pointer"></i> 套用我的選擇</button>
+    <button class="btn btn-g btn-sm" onclick="closeModal('qb-dup-result-modal')"><i class="fa fa-xmark"></i> 全部取消</button>
+  </div>
+  <div id="dup-result-list" style="display:flex;flex-direction:column;gap:14px"></div>
+</div>
+</div>
+
+<!-- ═══════════════ 品質檢查 Modal ═══════════════ -->
+<div id="qb-quality-check-modal" class="modal-ov">
+<div class="modal-box" style="max-width:880px;max-height:92vh;overflow-y:auto">
+  <div class="modal-hdr">
+    <div class="modal-title"><i class="fa fa-shield-halved" style="color:var(--indigo)"></i> 題庫品質檢查</div>
+    <button class="btn btn-g btn-ico" onclick="closeModal('qb-quality-check-modal')"><i class="fa fa-xmark"></i></button>
+  </div>
+  <div id="qc-summary" style="font-size:.85rem;color:var(--text-m);margin-bottom:10px"></div>
+  <div class="fx g2x mb3" style="flex-wrap:wrap">
+    <button class="btn btn-g btn-sm" onclick="qcAddAllToSelection()"><i class="fa fa-square-check"></i> 一鍵加入全部勾選</button>
+  </div>
+  <div id="qc-result-list" style="display:flex;flex-direction:column;gap:14px"></div>
 </div>
 </div>
 
@@ -4865,6 +4996,7 @@ function updateQBSelectionUI() {
   const setText = (id, t) => { const el = document.getElementById(id); if (el) el.textContent = t; };
 
   show('qb-add-to-exam',          n > 0);
+  show('qb-batch-edit-btn',       n > 0 || total > 0);
   show('qb-delete-selected-btn',  n > 0);
   show('qb-delete-all-btn',       total > 0);
   show('qb-select-all-btn',       total > 0 && n < total);
@@ -5030,6 +5162,538 @@ async function addSelectedToExam() {
   updateQBSelectionUI();
   toast(`✅ 已加入 ${added} 題到試卷`, 'ok');
   goTeacherSection('exambuilder');
+}
+
+/* ═══════════════════════════════
+   QUESTION BANK — 批次編輯 / 重複題 / 品質檢查 (v4.4)
+   - normOptions: 把 q.options 三種格式（{A,B}、[{key,text}]、[str,...]）統一成 {A:'',B:''...}
+   - 批次編輯：勾選欄位 → UPDATE in (ids)，作用範圍可切換 已勾選 / 目前篩選全部
+   - 重複題：3-gram Jaccard，題幹70%+選項30%，閾值 0.75，用 publisher::subject 分桶
+   - 品質檢查：分 高/中/低 三級，可一鍵加入勾選方便批刪
+═══════════════════════════════ */
+
+function normOptions(opts) {
+  if (!opts) return {};
+  if (Array.isArray(opts)) {
+    const r = {};
+    opts.forEach((o, i) => {
+      const key = (o && typeof o === 'object' && o.key) ? o.key : String.fromCharCode(65 + i);
+      const text = (typeof o === 'string') ? o : (o?.text ?? '');
+      if (text != null) r[key] = String(text);
+    });
+    return r;
+  }
+  if (typeof opts === 'object') {
+    const r = {};
+    Object.keys(opts).forEach(k => { r[k] = String(opts[k] ?? ''); });
+    return r;
+  }
+  return {};
+}
+
+function qbRelTime(ts) {
+  if (!ts) return '';
+  const diff = (Date.now() - new Date(ts).getTime()) / 1000;
+  if (diff < 60) return '剛剛';
+  if (diff < 3600) return `${Math.floor(diff/60)} 分鐘前`;
+  if (diff < 86400) return `${Math.floor(diff/3600)} 小時前`;
+  if (diff < 86400*30) return `${Math.floor(diff/86400)} 天前`;
+  if (diff < 86400*365) return `${Math.floor(diff/(86400*30))} 個月前`;
+  return `${Math.floor(diff/(86400*365))} 年前`;
+}
+
+function escHtml(s) {
+  return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+/* ── 批次編輯 ────────────────── */
+const BEM_FIELDS = ['publisher','subject','unit','diff','status'];
+const BEM_FIELD_LABEL = { publisher:'出版社', subject:'科目', knowledge_point:'單元', difficulty:'難度', status:'狀態' };
+
+async function openBatchEditModal() {
+  const selectedCount = APP.qbSelected.size;
+  const filterCount = parseInt(document.getElementById('qb-total')?.textContent || '0');
+
+  document.getElementById('bem-selected-count').textContent = selectedCount;
+  document.getElementById('bem-filter-count').textContent = filterCount;
+
+  const selRadio = document.getElementById('bem-scope-selected');
+  const fltRadio = document.getElementById('bem-scope-filter');
+  selRadio.disabled = selectedCount === 0;
+  selRadio.checked = selectedCount > 0;
+  fltRadio.checked = selectedCount === 0;
+
+  BEM_FIELDS.forEach(k => {
+    const cb = document.getElementById(`bem-ck-${k}`);
+    if (cb) cb.checked = false;
+  });
+  // 重置值欄位（保留預設）
+  const subj = document.getElementById('bem-val-subject'); if (subj) subj.value = '';
+  const unit = document.getElementById('bem-val-unit');    if (unit) unit.value = '';
+
+  document.getElementById('qb-batch-edit-modal').classList.add('show');
+  updateBatchEditApplyBtn();
+}
+
+function updateBatchEditApplyBtn() {
+  const checked = BEM_FIELDS.filter(k => document.getElementById(`bem-ck-${k}`)?.checked);
+  const apply = document.getElementById('bem-apply-btn');
+  apply.disabled = checked.length === 0;
+
+  // 摘要文字
+  const scope = document.getElementById('bem-scope-selected')?.checked ? 'selected' : 'filter';
+  const cnt = scope === 'selected'
+    ? document.getElementById('bem-selected-count').textContent
+    : document.getElementById('bem-filter-count').textContent;
+  const summary = document.getElementById('bem-summary');
+  if (!checked.length) {
+    summary.textContent = '請至少勾選一個要修改的欄位';
+    summary.style.color = 'var(--text-m)';
+  } else {
+    const dbKeyMap = { publisher:'publisher', subject:'subject', unit:'knowledge_point', diff:'difficulty', status:'status' };
+    const names = checked.map(k => BEM_FIELD_LABEL[dbKeyMap[k]]).join('、');
+    summary.innerHTML = `即將修改 <b style="color:var(--indigo)">${cnt}</b> 題，異動欄位：<b>${escHtml(names)}</b>`;
+    summary.style.color = 'var(--text)';
+  }
+}
+
+async function applyBatchEdit() {
+  const scope = document.getElementById('bem-scope-selected').checked ? 'selected' : 'filter';
+  const payload = {};
+
+  if (document.getElementById('bem-ck-publisher').checked)
+    payload.publisher = document.getElementById('bem-val-publisher').value;
+  if (document.getElementById('bem-ck-subject').checked)
+    payload.subject = document.getElementById('bem-val-subject').value.trim();
+  if (document.getElementById('bem-ck-unit').checked)
+    payload.knowledge_point = document.getElementById('bem-val-unit').value.trim();
+  if (document.getElementById('bem-ck-diff').checked)
+    payload.difficulty = document.getElementById('bem-val-diff').value;
+  if (document.getElementById('bem-ck-status').checked)
+    payload.status = document.getElementById('bem-val-status').value;
+
+  if (Object.keys(payload).length === 0) {
+    toast('請至少勾選一個要修改的欄位', 'er'); return;
+  }
+
+  // 取得目標 IDs
+  let ids = [];
+  if (scope === 'selected') {
+    ids = [...APP.qbSelected];
+  } else {
+    const publisher = document.getElementById('qb-publisher')?.value || '';
+    const unit      = document.getElementById('qb-unit')?.value || '';
+    const diff      = document.getElementById('qb-diff')?.value || '';
+    const qtype     = document.getElementById('qb-type')?.value || '';
+    const search    = document.getElementById('qb-search')?.value?.toLowerCase() || '';
+    let q = sb.from('questions').select('id, content, knowledge_point').eq('status','approved');
+    if (publisher) q = q.eq('publisher', publisher);
+    if (diff)      q = q.eq('difficulty', diff);
+    if (qtype)     q = q.eq('question_type', qtype);
+    if (unit)      q = q.ilike('knowledge_point', `%${unit}%`);
+    const { data, error } = await q;
+    if (error) { toast('查詢失敗：' + error.message, 'er'); return; }
+    let rows = data || [];
+    if (search) rows = rows.filter(r => (r.content||'').toLowerCase().includes(search) || (r.knowledge_point||'').toLowerCase().includes(search));
+    ids = rows.map(r => r.id);
+  }
+
+  if (!ids.length) { toast('沒有符合條件的題目', 'er'); return; }
+
+  const fieldNames = Object.keys(payload).map(k => BEM_FIELD_LABEL[k]).join('、');
+  showConfirm('批次編輯確認',
+    `即將修改 ${ids.length} 題，異動欄位：${fieldNames}。\n確定要執行嗎？`,
+    '確認修改', 'btn-p',
+    async () => {
+      const { error } = await sb.from('questions').update(payload).in('id', ids);
+      if (error) { toast('修改失敗：' + error.message, 'er'); return; }
+      toast(`✅ 已修改 ${ids.length} 題`, 'ok');
+      closeModal('qb-batch-edit-modal');
+      APP.qbSelected.clear();
+      loadQuestionBank();
+    });
+}
+
+/* ── 重複題偵測 ────────────────── */
+function normalizeForDup(text) {
+  return (text || '').toString().toLowerCase()
+    .replace(/[Ａ-Ｚａ-ｚ０-９]/g, c => String.fromCharCode(c.charCodeAt(0) - 0xFEE0))
+    .replace(/\s+/g, '')
+    .replace(/[。，、；：？！""''（）【】《》「」『』\.,;:?!"'()[\]{}<>\-_=+*/\\|~`]/g, '')
+    .replace(/\\[a-z]+\{?/gi, '')
+    .replace(/[{}]/g, '');
+}
+
+function nGrams(text, n = 3) {
+  const s = normalizeForDup(text);
+  if (s.length < n) return new Set([s]);
+  const set = new Set();
+  for (let i = 0; i <= s.length - n; i++) set.add(s.substring(i, i + n));
+  return set;
+}
+
+function jaccard(setA, setB) {
+  if (!setA.size || !setB.size) return 0;
+  let intersect = 0;
+  for (const x of setA) if (setB.has(x)) intersect++;
+  return intersect / (setA.size + setB.size - intersect);
+}
+
+function qualityScore(q) {
+  let score = 0;
+  score += (q.explanation || '').length * 2;
+  const opts = normOptions(q.options);
+  const optKeys = Object.keys(opts).filter(k => (opts[k] || '').toString().trim() !== '');
+  score += optKeys.length * 10;
+  if (q.image_data) score += 20;
+  if ((q.answer || '').toString().trim()) score += 5;
+  return score;
+}
+
+function groupDuplicates(pairs) {
+  const parent = new Map();
+  const find = (x) => {
+    while (parent.get(x) !== x) {
+      parent.set(x, parent.get(parent.get(x)));
+      x = parent.get(x);
+    }
+    return x;
+  };
+  const union = (a, b) => {
+    const ra = find(a), rb = find(b);
+    if (ra !== rb) parent.set(ra, rb);
+  };
+  pairs.forEach(({ id1, id2 }) => {
+    if (!parent.has(id1)) parent.set(id1, id1);
+    if (!parent.has(id2)) parent.set(id2, id2);
+    union(id1, id2);
+  });
+  const groups = new Map();
+  for (const id of parent.keys()) {
+    const root = find(id);
+    if (!groups.has(root)) groups.set(root, []);
+    groups.get(root).push(id);
+  }
+  return [...groups.values()];
+}
+
+async function scanDuplicates() {
+  if (!sb) return;
+  const progEl = document.getElementById('qb-dup-scan-progress-modal');
+  const setStatus = (txt, detail = '') => {
+    const s = document.getElementById('dup-scan-status'); if (s) s.textContent = txt;
+    const d = document.getElementById('dup-scan-detail'); if (d) d.textContent = detail;
+  };
+
+  progEl.classList.add('show');
+  setStatus('正在抓取題庫...', '');
+  await new Promise(r => setTimeout(r, 30));
+
+  const { data, error } = await sb.from('questions')
+    .select('id, content, options, answer, explanation, created_at, difficulty, publisher, subject, knowledge_point, image_data, question_type')
+    .eq('status', 'approved');
+
+  if (error || !data) {
+    closeModal('qb-dup-scan-progress-modal');
+    toast('抓取失敗：' + (error?.message || ''), 'er');
+    return;
+  }
+
+  if (!data.length) {
+    closeModal('qb-dup-scan-progress-modal');
+    toast('題庫是空的', 'in');
+    return;
+  }
+
+  if (data.length > 2000) {
+    closeModal('qb-dup-scan-progress-modal');
+    if (!confirm(`題庫共 ${data.length} 題，比對可能需 10-30 秒。\n確定繼續？`)) return;
+    progEl.classList.add('show');
+  }
+
+  // 分桶（publisher::subject）
+  const buckets = new Map();
+  data.forEach(q => {
+    const key = `${q.publisher || '_'}::${q.subject || '_'}`;
+    if (!buckets.has(key)) buckets.set(key, []);
+    buckets.get(key).push(q);
+  });
+
+  // 預先快取 n-gram
+  setStatus('正在預先計算指紋...', `${data.length} 題`);
+  await new Promise(r => setTimeout(r, 30));
+  const cache = new Map();
+  data.forEach(q => {
+    const opts = normOptions(q.options);
+    cache.set(q.id, {
+      stem: nGrams(q.content),
+      opts: nGrams(Object.values(opts).join('|')),
+    });
+  });
+
+  // 兩兩比對
+  const pairs = [];
+  let bucketIdx = 0;
+  const bucketArr = [...buckets.entries()];
+  for (const [key, bucket] of bucketArr) {
+    bucketIdx++;
+    setStatus(`正在比對第 ${bucketIdx} / ${bucketArr.length} 桶`, `${key}（${bucket.length} 題）`);
+    await new Promise(r => setTimeout(r, 0));
+
+    for (let i = 0; i < bucket.length; i++) {
+      for (let j = i + 1; j < bucket.length; j++) {
+        const c1 = cache.get(bucket[i].id);
+        const c2 = cache.get(bucket[j].id);
+        const stemSim = jaccard(c1.stem, c2.stem);
+        const optSim = jaccard(c1.opts, c2.opts);
+        const sim = stemSim * 0.7 + optSim * 0.3;
+        if (sim >= 0.75) pairs.push({ id1: bucket[i].id, id2: bucket[j].id, sim });
+      }
+    }
+  }
+
+  // Union-Find 分組
+  const groupedIds = groupDuplicates(pairs);
+  const idToQ = new Map(data.map(q => [q.id, q]));
+  const pairKey = (a, b) => a < b ? `${a}::${b}` : `${b}::${a}`;
+  const pairSimMap = new Map(pairs.map(p => [pairKey(p.id1, p.id2), p.sim]));
+
+  const groups = groupedIds.map(ids => {
+    const qs = ids.map(id => idToQ.get(id)).filter(Boolean);
+    qs.sort((a, b) => qualityScore(b) - qualityScore(a));
+    let maxSim = 0;
+    for (let i = 0; i < ids.length; i++) {
+      for (let j = i + 1; j < ids.length; j++) {
+        const s = pairSimMap.get(pairKey(ids[i], ids[j]));
+        if (s != null && s > maxSim) maxSim = s;
+      }
+    }
+    return { questions: qs, recommendKeepId: qs[0]?.id, maxSim };
+  });
+
+  closeModal('qb-dup-scan-progress-modal');
+
+  if (!groups.length) {
+    toast('🎉 沒有發現重複題', 'ok');
+    return;
+  }
+
+  APP._dupGroups = groups;
+  renderDupResults(groups);
+  document.getElementById('qb-dup-result-modal').classList.add('show');
+}
+
+function renderDupResults(groups) {
+  const totalQs = groups.reduce((s, g) => s + g.questions.length, 0);
+  document.getElementById('dup-result-summary').innerHTML =
+    `發現 <b style="color:var(--indigo)">${groups.length}</b> 組重複題（共 <b>${totalQs}</b> 題）。預設將保留每組「品質最高者」（詳解最完整、選項齊全、含圖優先）。`;
+
+  const list = document.getElementById('dup-result-list');
+  list.innerHTML = groups.map((g, gi) => {
+    const cards = g.questions.map((q, qi) => {
+      const isRecommend = q.id === g.recommendKeepId;
+      const opts = normOptions(q.options);
+      const optKeys = Object.keys(opts);
+      const optsBrief = optKeys.length
+        ? optKeys.slice(0, 4).map(k => `<b>${k}.</b> ${escHtml((opts[k]||'').substring(0,30))}`).join(' ')
+        : '<i style="color:var(--text-l)">無選項</i>';
+      const stem = (q.content || '').toString();
+      const stemShort = stem.length > 80 ? stem.substring(0, 80) + '...' : stem;
+      const explLen = (q.explanation || '').length;
+      const diffLabel = {easy:'易',medium:'中',hard:'難'}[q.difficulty] || '中';
+      const imgHtml = q.image_data
+        ? `<img src="${q.image_data}" style="max-width:80px;max-height:60px;border-radius:var(--r-sm);border:1px solid var(--border);margin-left:8px" alt="附圖">`
+        : '';
+
+      return `<div style="border:1px solid ${isRecommend?'var(--indigo)':'var(--border)'};background:${isRecommend?'var(--accent-soft)':'var(--glass)'};border-radius:var(--r-md);padding:10px 12px">
+        <div class="fx ai-c g2x mb2" style="flex-wrap:wrap">
+          <label style="display:flex;align-items:center;gap:4px;font-size:.78rem;cursor:pointer">
+            <input type="radio" name="dupq-${escHtml(q.id)}" value="keep" ${isRecommend?'checked':''} style="accent-color:var(--emerald)">
+            保留
+          </label>
+          <label style="display:flex;align-items:center;gap:4px;font-size:.78rem;cursor:pointer">
+            <input type="radio" name="dupq-${escHtml(q.id)}" value="delete" ${isRecommend?'':'checked'} style="accent-color:var(--rose)">
+            <span style="color:var(--rose)">刪除</span>
+          </label>
+          ${isRecommend ? '<span class="chip" style="background:var(--accent-soft);border-color:var(--indigo);color:var(--indigo);font-size:.7rem">● 建議保留</span>' : ''}
+          <span class="chip ci" style="font-size:.7rem">${escHtml(q.publisher || '未分類')}</span>
+          <span class="chip cg" style="font-size:.7rem">難度 ${diffLabel}</span>
+          <span style="font-size:.72rem;color:var(--text-l)">建立於 ${qbRelTime(q.created_at)}</span>
+          <span style="font-size:.72rem;color:var(--text-l)">品質分 ${qualityScore(q)}</span>
+        </div>
+        <div style="font-size:.85rem;color:var(--text);margin-bottom:4px">${escHtml(stemShort)}${stem.length > 80 ? `<a href="javascript:;" onclick="this.previousSibling.textContent=this.dataset.full;this.remove()" data-full="${escHtml(stem)}" style="color:var(--indigo);font-size:.72rem;margin-left:6px">展開</a>` : ''}</div>
+        <div style="font-size:.78rem;color:var(--text-m)">${optsBrief}</div>
+        <div style="font-size:.74rem;color:var(--text-l);margin-top:4px">答案：<b>${escHtml(q.answer || '—')}</b> ｜ 詳解 ${explLen} 字${imgHtml ? '' : ''}</div>
+        ${imgHtml ? `<div style="margin-top:6px">${imgHtml}</div>` : ''}
+      </div>`;
+    }).join('');
+
+    return `<div style="border:1px solid var(--border);border-radius:var(--r-md);padding:12px;background:var(--glass)">
+      <div style="font-weight:600;margin-bottom:8px;color:var(--text)">
+        <i class="fa fa-layer-group" style="color:var(--indigo)"></i>
+        第 ${gi+1} 組（${g.questions.length} 題，最高相似度 <span style="color:var(--indigo)">${g.maxSim.toFixed(2)}</span>）
+      </div>
+      <div style="display:flex;flex-direction:column;gap:8px">${cards}</div>
+    </div>`;
+  }).join('');
+}
+
+async function _dupExecuteDelete(toDelete, label) {
+  if (!toDelete.length) { toast('沒有題目被標記為刪除', 'er'); return; }
+  showConfirm('合併重複題',
+    `將刪除 ${toDelete.length} 題，此操作不可復原。\n${label}`,
+    '確認刪除', 'btn-r',
+    async () => {
+      await sb.from('answers').delete().in('question_id', toDelete);
+      const { error } = await sb.from('questions').delete().in('id', toDelete);
+      if (error) { toast('刪除失敗：' + error.message, 'er'); return; }
+      toast(`✅ 已刪除 ${toDelete.length} 題`, 'ok');
+      closeModal('qb-dup-result-modal');
+      APP._dupGroups = null;
+      APP.qbSelected.clear();
+      loadQuestionBank();
+    });
+}
+
+function applyDupSuggestion() {
+  if (!APP._dupGroups?.length) return;
+  const toDelete = [];
+  APP._dupGroups.forEach(g => {
+    g.questions.forEach(q => { if (q.id !== g.recommendKeepId) toDelete.push(q.id); });
+  });
+  _dupExecuteDelete(toDelete, '依「建議保留」分類執行');
+}
+
+function applyDupCustom() {
+  const toDelete = [];
+  document.querySelectorAll('#dup-result-list input[type=radio]:checked').forEach(r => {
+    if (r.value === 'delete') {
+      const qid = r.name.replace(/^dupq-/, '');
+      if (qid) toDelete.push(qid);
+    }
+  });
+  _dupExecuteDelete(toDelete, '依使用者選擇執行');
+}
+
+/* ── 品質檢查 ────────────────── */
+async function runQualityCheck() {
+  if (!sb) return;
+  toast('正在檢查...', 'in');
+  const { data, error } = await sb.from('questions')
+    .select('id, content, options, answer, explanation, knowledge_point, question_type, publisher, difficulty')
+    .eq('status', 'approved');
+  if (error) { toast('查詢失敗：' + error.message, 'er'); return; }
+  if (!data?.length) { toast('題庫是空的', 'in'); return; }
+
+  const issues = { high: [], mid: [], low: [] };
+
+  data.forEach(q => {
+    const opts = normOptions(q.options);
+    const optKeys = Object.keys(opts).filter(k => (opts[k] || '').toString().trim() !== '');
+    const ans = (q.answer || '').toString().trim();
+    const qtype = q.question_type || 'single';
+
+    if (!ans) {
+      issues.high.push({ q, type: 'no-answer', msg: '答案空白' });
+    } else if (qtype === 'single' && optKeys.length && !opts[ans]) {
+      issues.high.push({ q, type: 'answer-mismatch', msg: `答案 "${ans}" 不在選項中（選項：${optKeys.join(', ')}）` });
+    }
+    if (optKeys.length < 2 && qtype !== 'fill') {
+      issues.mid.push({ q, type: 'few-options', msg: `選項數不足（僅 ${optKeys.length} 個）` });
+    }
+    const optTexts = optKeys.map(k => (opts[k]||'').toString().trim());
+    if (optTexts.length && (new Set(optTexts)).size < optTexts.length) {
+      issues.mid.push({ q, type: 'dup-options', msg: '有兩個選項內容相同' });
+    }
+    if ((q.content || '').includes('[IMG:')) {
+      issues.mid.push({ q, type: 'img-placeholder', msg: '題幹含未填圖片佔位符 [IMG:...]' });
+    }
+    if ((q.content || '').length < 10) {
+      issues.low.push({ q, type: 'short-content', msg: `題幹過短（${(q.content||'').length} 字）` });
+    }
+    if (!q.knowledge_point || !q.knowledge_point.trim()) {
+      issues.low.push({ q, type: 'no-unit', msg: '無單元 / 知識點' });
+    }
+  });
+
+  APP._qcIssues = issues;
+  renderQualityResults(issues);
+  document.getElementById('qb-quality-check-modal').classList.add('show');
+}
+
+function renderQualityResults(issues) {
+  const totalIssues = issues.high.length + issues.mid.length + issues.low.length;
+  const uniqueQs = new Set([...issues.high, ...issues.mid, ...issues.low].map(x => x.q.id));
+
+  document.getElementById('qc-summary').innerHTML = totalIssues === 0
+    ? '🎉 沒有發現品質問題'
+    : `共發現 <b style="color:var(--indigo)">${totalIssues}</b> 個問題，涉及 <b>${uniqueQs.size}</b> 題 ｜ 🔴 高 ${issues.high.length} ｜ 🟡 中 ${issues.mid.length} ｜ 🟢 低 ${issues.low.length}`;
+
+  const list = document.getElementById('qc-result-list');
+  if (totalIssues === 0) { list.innerHTML = ''; return; }
+
+  const renderSection = (level, label, color, arr) => {
+    if (!arr.length) return '';
+    const cards = arr.map(({ q, msg }) => {
+      const stem = (q.content || '').toString();
+      const stemShort = stem.length > 100 ? stem.substring(0, 100) + '...' : stem;
+      return `<div style="border:1px solid var(--border);border-radius:var(--r-md);padding:8px 12px;background:var(--glass)">
+        <div class="fx ai-c g2x mb2" style="flex-wrap:wrap">
+          <span style="color:${color};font-weight:600;font-size:.8rem">● ${escHtml(msg)}</span>
+          <span class="chip ci" style="font-size:.7rem">${escHtml(q.publisher || '未分類')}</span>
+          ${q.knowledge_point ? `<span class="chip cv" style="font-size:.7rem">${escHtml(q.knowledge_point)}</span>` : ''}
+          <div style="margin-left:auto;display:flex;gap:4px">
+            <button class="btn btn-g btn-sm" style="padding:3px 8px;font-size:.72rem" onclick="qbEditQuestion('${escHtml(q.id)}')"><i class="fa fa-pen"></i> 編輯</button>
+            <button class="btn btn-g btn-sm" style="padding:3px 8px;font-size:.72rem" onclick="qcAddOneToSelection('${escHtml(q.id)}', this)"><i class="fa fa-square-check"></i> 加入勾選</button>
+          </div>
+        </div>
+        <div style="font-size:.82rem;color:var(--text-m)">${escHtml(stemShort)}</div>
+      </div>`;
+    }).join('');
+
+    return `<div>
+      <div style="font-weight:600;margin-bottom:8px;color:${color}">
+        ${label}（${arr.length}）
+      </div>
+      <div style="display:flex;flex-direction:column;gap:6px">${cards}</div>
+    </div>`;
+  };
+
+  list.innerHTML = [
+    renderSection('high', '🔴 高嚴重度', 'var(--rose)', issues.high),
+    renderSection('mid', '🟡 中嚴重度', 'var(--warning, #c08a00)', issues.mid),
+    renderSection('low', '🟢 低嚴重度', 'var(--emerald)', issues.low),
+  ].join('');
+}
+
+function qcAddOneToSelection(qid, btn) {
+  APP.qbSelected.add(qid);
+  if (btn) {
+    btn.innerHTML = '<i class="fa fa-check"></i> 已加入';
+    btn.disabled = true;
+  }
+  toast('已加入勾選', 'ok');
+  updateQBSelectionUI();
+}
+
+function qcAddAllToSelection() {
+  if (!APP._qcIssues) return;
+  const ids = new Set();
+  ['high','mid','low'].forEach(lv => APP._qcIssues[lv].forEach(x => ids.add(x.q.id)));
+  if (!ids.size) { toast('沒有可加入的題目', 'in'); return; }
+  ids.forEach(id => APP.qbSelected.add(id));
+  toast(`✅ 已加入 ${ids.size} 題到勾選`, 'ok');
+  updateQBSelectionUI();
+  // 同步畫面上的勾選狀態
+  ids.forEach(id => {
+    const el = document.getElementById('qb-' + id);
+    if (el) {
+      const cb = el.querySelector('input[type=checkbox]');
+      if (cb) cb.checked = true;
+      el.style.borderLeft = '3px solid var(--indigo)';
+      el.style.background = 'var(--accent-soft)';
+    }
+  });
 }
 
 function openUploadDoc() {
