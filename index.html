@@ -1,9 +1,16 @@
 <!DOCTYPE html>
-<html lang="zh-TW" data-theme="dark">
+<html lang="zh-TW">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>EduFlow — 智慧教學系統 · Liquid Glass v2</title>
+<title>EduFlow — 智慧教學系統</title>
+<script>
+  // 主題初始化（放最前面避免閃爍）
+  (function(){
+    var saved = localStorage.getItem('eduflow-theme') || 'light';
+    document.documentElement.dataset.theme = saved;
+  })();
+</script>
 <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Outfit:wght@300;400;500;600;700;800&family=Noto+Sans+TC:wght@300;400;500;700&display=swap" rel="stylesheet">
 <!-- Design Tokens v1.0 · Phase 1 fonts: Inter / Source Serif 4 / Noto Sans TC (600) / Noto Serif TC / JetBrains Mono -->
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Source+Serif+4:wght@400;500;600&family=Noto+Sans+TC:wght@400;500;600&family=Noto+Serif+TC:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -232,7 +239,7 @@ tbody tr:hover td{background:rgba(94,175,193,.025)}
 
 /* ═══════════════ NAVIGATION ═══════════════ */
 .topnav{position:sticky;top:0;z-index:100;
-  background:var(--raised);
+  background:var(--surface);
   border-bottom:1px solid var(--border);
   padding:0 26px;height:60px;display:flex;align-items:center;gap:14px;
   position:relative}
@@ -241,14 +248,15 @@ tbody tr:hover td{background:rgba(94,175,193,.025)}
   letter-spacing:-.5px;flex-shrink:0;cursor:pointer;font-weight:600}
 .nav-tabs{display:flex;gap:2px;flex:1;overflow:visible;scrollbar-width:none}
 .nav-tabs::-webkit-scrollbar{display:none}
-.nt{padding:6px 15px;border-radius:50px;cursor:pointer;font-size:.8rem;font-weight:600;
-  transition:all .2s;border:none;background:none;color:rgba(165,162,158,0.75);font-family:inherit;white-space:nowrap}
-.nt:hover{color:var(--accent);background:var(--i-s)}
-.nt.on{color:var(--accent);background:rgba(13,148,136,.13);border:1px solid rgba(13,148,136,.25)}
+.nt{padding:6px 14px;border-radius:var(--r-sm);cursor:pointer;font-size:.83rem;font-weight:500;
+  transition:background var(--t-fast),color var(--t-fast);border:none;background:transparent;
+  color:var(--muted);font-family:inherit;white-space:nowrap}
+.nt:hover{color:var(--ink);background:var(--raised)}
+.nt.on{color:var(--accent);background:var(--raised);font-weight:600}
 .nav-r{display:flex;align-items:center;gap:9px;margin-left:auto;flex-shrink:0}
 .nav-av{width:34px;height:34px;border-radius:50%;background:var(--accent);
   display:flex;align-items:center;justify-content:center;color:var(--raised);font-size:.82rem;font-weight:700;
-  cursor:pointer;border:2px solid rgba(255,255,255,.85);box-shadow:0 2px 10px rgba(94,175,193,.28)}
+  cursor:pointer;border:1px solid var(--border)}
 .notif-btn{position:relative}
 .notif-dot{position:absolute;top:-1px;right:-1px;width:9px;height:9px;border-radius:50%;
   background:var(--rose);border:2px solid #eef2ff}
@@ -1449,6 +1457,7 @@ a { color: var(--indigo); }
     </div>
     <div class="nav-r">
       <button class="btn btn-p btn-sm" onclick="startAssignedQuiz()"><i class="fa fa-play"></i> 開始測驗</button>
+      <button class="btn btn-g btn-ico theme-toggle" onclick="toggleTheme()" title="切換深色/淺色模式"><i class="fa fa-moon"></i></button>
       <div class="notif-btn">
         <button class="btn btn-g btn-ico" onclick="toggleNotif()"><i class="fa fa-bell"></i></button>
         <span class="notif-dot" id="notif-dot"></span>
@@ -1771,6 +1780,7 @@ a { color: var(--indigo); }
       </div>
     </div>
     <div class="nav-r">
+      <button class="btn btn-g btn-ico theme-toggle" onclick="toggleTheme()" title="切換深色/淺色模式"><i class="fa fa-moon"></i></button>
       <button class="btn btn-g btn-ico" onclick="toggleNotif()"><i class="fa fa-bell"></i></button>
       <div class="user-dd-wrap">
         <div class="nav-av" id="t-avatar" style="background:var(--warning)" onclick="toggleUserDD(event)">師</div>
@@ -2427,6 +2437,7 @@ a { color: var(--indigo); }
     </div>
     <div class="nav-r">
       <span class="admin-badge"><i class="fa fa-shield-halved"></i> 系統管理員</span>
+      <button class="btn btn-g btn-ico theme-toggle" onclick="toggleTheme()" title="切換深色/淺色模式"><i class="fa fa-moon"></i></button>
       <div class="user-dd-wrap">
         <div class="nav-av role-admin" onclick="toggleUserDD(event)">管</div>
       </div>
@@ -3879,6 +3890,25 @@ async function completeFirstLogin() {
   closeModal('first-login-modal');
   toast('🎉 設定完成！歡迎使用 EduFlow', 'ok');
 }
+
+/* ═══════════════════════════════
+   THEME TOGGLE (LIGHT / DARK)
+═══════════════════════════════ */
+function toggleTheme() {
+  const cur = document.documentElement.dataset.theme || 'light';
+  const next = cur === 'light' ? 'dark' : 'light';
+  document.documentElement.dataset.theme = next;
+  localStorage.setItem('eduflow-theme', next);
+  updateThemeIcons(next);
+}
+function updateThemeIcons(theme) {
+  document.querySelectorAll('.theme-toggle i').forEach(i => {
+    i.className = theme === 'dark' ? 'fa fa-sun' : 'fa fa-moon';
+  });
+}
+document.addEventListener('DOMContentLoaded', () => {
+  updateThemeIcons(document.documentElement.dataset.theme || 'light');
+});
 
 /* ═══════════════════════════════
    USER DROPDOWN MENU
