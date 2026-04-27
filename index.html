@@ -962,15 +962,6 @@ a { color: var(--indigo); }
   font-size: .82rem; font-style: italic;
   margin: 0 2px;
 }
-.docx-html-preview .formula-rendered {
-  /* 行內公式跟著文字流走，不要撐高整行 */
-  max-height: 1.8em !important;
-  width: auto;
-  vertical-align: middle;
-  background: transparent;
-  /* 只去飽和、不加 contrast；contrast 會把白背景壓成灰 */
-  filter: grayscale(1);
-}
 .gas-q-card {
   background:var(--surface); border:1px solid var(--border);
   border-radius:var(--r-lg); padding:.85rem 1rem;
@@ -9536,23 +9527,8 @@ async function parseDOCXFile() {
     document.getElementById('docx-step-upload').style.display  = 'none';
     document.getElementById('docx-step-preview').style.display = 'block';
 
-    // ── C4：把 EMF/WMF fallback 還原成 PNG，替換預覽區的 chip ──
-    if (fbCount > 0) {
-      btn.innerHTML = `<i class="fa fa-spinner fa-spin"></i> 還原 ${fbCount} 個公式預覽圖...`;
-      try {
-        const { converted, failed, dataUrls } = await _convertDOCXFallbacksToImages();
-        if (converted > 0) _renderDOCXPreviewWithFormulas(dataUrls);
-        toast(
-          failed === 0
-            ? `✅ 公式還原：${converted} 張全部成功`
-            : `公式還原：${converted} 成功 / ${failed} 失敗（失敗者保留 chip）`,
-          failed === 0 ? 'ok' : 'in'
-        );
-      } catch (e) {
-        console.error('公式還原失敗:', e);
-        toast(`公式還原失敗：${e.message}（保留 chip 顯示）`, 'er');
-      }
-    }
+    // 註：emf-converter 直接渲染（C4 v1）已撤——公式失真到誤導；C7 改用 AI Vision 拼貼辨識為 LaTeX。
+    // _convertDOCXFallbacksToImages() 仍保留供 C7 拼貼前 EMF→PNG 用。
 
     btn.disabled  = false;
     btn.innerHTML = '<i class="fa fa-check"></i> 已解析（C5 才會切題）';
@@ -9569,7 +9545,8 @@ async function saveDOCXQuestions() {
   toast('儲存功能尚未啟用', 'in');
 }
 
-/* ── C4：EMF/WMF → PNG dataURL（emf-converter from jsdelivr CDN）── */
+/* ── C4 / C7 共用：EMF/WMF → PNG dataURL（emf-converter from jsdelivr CDN）──
+   渲染品質不足以直接顯示給老師看，但作為「給 Vision 辨識」的中間素材夠用。 */
 let _emfConverterMod = null;
 async function _loadEmfConverter() {
   if (_emfConverterMod) return _emfConverterMod;
@@ -9616,28 +9593,6 @@ async function _convertDOCXFallbacksToImages() {
   return { converted, failed, dataUrls };
 }
 
-function _renderDOCXPreviewWithFormulas(dataUrls) {
-  // 把 _docxData.html 內 span.formula-fallback 替換成 img.formula-rendered
-  const tmp = document.createElement('div');
-  tmp.innerHTML = _docxData.html;
-  tmp.querySelectorAll('span.formula-fallback').forEach(span => {
-    const m = (span.textContent || '').match(/#(\d+)/);
-    if (!m) return;
-    const id  = m[1];
-    const url = dataUrls[id];
-    if (!url) return;
-    const img = document.createElement('img');
-    img.src       = url;
-    img.alt       = `[公式#${id}]`;
-    img.className = 'formula-rendered';
-    span.replaceWith(img);
-  });
-  _docxData.html = tmp.innerHTML;
-
-  // 重新塞回預覽區
-  const previewDiv = document.querySelector('#docx-cards .docx-html-preview');
-  if (previewDiv) previewDiv.innerHTML = _docxData.html;
-}
 /* ══ END DOCX 匯入 ══ */
 
 /* ═══════════════════════════════════════════════════════
