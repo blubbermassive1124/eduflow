@@ -1914,6 +1914,7 @@ a { color: var(--indigo); }
           <button class="btn btn-p btn-sm" onclick="openUploadDoc()"><i class="fa fa-file-import"></i> 匯入題目</button>
           <button class="btn btn-g btn-sm" onclick="openGASImportModal()"><i class="fa fa-code"></i> GAS 匯入</button>
           <button class="btn btn-g btn-sm" onclick="openJSONImportModal()"><i class="fa fa-file-code"></i> JSON 匯入</button>
+          <button class="btn btn-g btn-sm" onclick="openDOCXImportModal()"><i class="fa fa-file-word"></i> DOCX 匯入</button>
           <button class="btn btn-g btn-sm" id="fill-img-btn" onclick="openFillImagesModal()" style="display:none">
             <i class="fa fa-image" style="color:var(--warning)"></i> 填補圖片 <span id="fill-img-badge" class="gas-badge gas-badge-img" style="margin-left:2px"></span>
           </button>
@@ -2991,6 +2992,90 @@ a { color: var(--indigo); }
     <div style="display:flex;gap:8px;justify-content:center;margin-top:20px">
       <button class="btn btn-g" onclick="resetJSONImport()"><i class="fa fa-plus"></i> 繼續匯入</button>
       <button class="btn btn-p" onclick="closeJSONImportModal();goTeacherSection('qbank')">
+        <i class="fa fa-database"></i> 查看題庫
+      </button>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ═══════════════ DOCX 匯入 Modal ═══════════════ -->
+<div id="docx-import-modal" class="modal-ov">
+<div class="modal-box" style="max-width:760px;max-height:90vh;overflow-y:auto">
+  <div class="modal-hdr">
+    <div class="modal-title"><i class="fa fa-file-word" style="color:var(--indigo)"></i> DOCX 試卷匯入（翰林 / 南一 / 康軒）</div>
+    <button class="btn btn-g btn-ico" onclick="closeDOCXImportModal()"><i class="fa fa-xmark"></i></button>
+  </div>
+
+  <!-- Step 1: Upload -->
+  <div id="docx-step-upload">
+    <div class="gas-how-to">
+      <h4>📄 支援格式</h4>
+      <ol>
+        <li>僅接受 <strong>.docx</strong> 檔；舊版 <strong>.doc</strong> 請先用 Word 或 LibreOffice 另存為 .docx</li>
+        <li>系統自動偵測出版社（翰林 / 南一 / 康軒），切題並建立預覽</li>
+        <li>數學公式以圖片形式保留，匯入後可在題庫頁手動補 LaTeX</li>
+      </ol>
+    </div>
+
+    <div class="gas-img-upload-box" id="docx-drop-zone"
+      onclick="document.getElementById('docx-file-input').click()"
+      ondragover="event.preventDefault();this.classList.add('dragover')"
+      ondragleave="this.classList.remove('dragover')"
+      ondrop="event.preventDefault();this.classList.remove('dragover');handleDocxDrop(event)">
+      <i class="fa fa-file-word" style="font-size:2rem;color:var(--indigo)"></i>
+      <p>點此選擇 .docx 檔，或拖曳到此</p>
+      <small>單檔上傳，最大約 10 MB</small>
+    </div>
+    <input type="file" id="docx-file-input" style="display:none" accept=".docx"
+      onchange="handleDocxUpload(this)">
+
+    <div id="docx-file-info" style="display:none;margin-top:14px;padding:.8rem 1rem;background:rgba(99,102,241,.06);border:1px solid var(--border);border-radius:var(--r-lg)">
+      <div style="font-size:.88rem;color:var(--text);margin-bottom:6px">
+        <i class="fa fa-circle-check" style="color:var(--emerald)"></i>
+        檔案已就緒：<strong id="docx-file-name"></strong>
+        <span id="docx-file-size" style="color:var(--text-l);font-size:.78rem;margin-left:6px"></span>
+      </div>
+      <div style="font-size:.78rem;color:var(--text-l)">
+        偵測出版社：<span id="docx-detected-publisher" style="color:var(--indigo);font-weight:600">尚未解析</span>
+      </div>
+    </div>
+
+    <button class="btn btn-p" style="width:100%;margin-top:14px" id="docx-parse-btn" onclick="parseDOCXFile()" disabled>
+      <i class="fa fa-magnifying-glass"></i> 解析 DOCX（請先選檔）
+    </button>
+  </div>
+
+  <!-- Step 2: Preview (待 C5 實作) -->
+  <div id="docx-step-preview" style="display:none">
+    <div class="fx ai-c jb mb3">
+      <div>
+        <div style="font-size:.9rem;font-weight:600;color:var(--text)">解析結果預覽</div>
+        <div style="font-size:.78rem;color:var(--text-l)">
+          共 <strong id="docx-q-count" style="color:var(--indigo)">0</strong> 題，確認後存入題庫
+        </div>
+      </div>
+      <button class="btn btn-g btn-sm" onclick="docxBackToUpload()">
+        <i class="fa fa-arrow-left"></i> 重新上傳
+      </button>
+    </div>
+    <div class="gas-cards-scroll" id="docx-cards"></div>
+    <div style="display:flex;gap:8px;margin-top:14px;border-top:1px solid var(--border);padding-top:14px">
+      <button class="btn btn-g" onclick="closeDOCXImportModal()"><i class="fa fa-xmark"></i> 取消</button>
+      <button class="btn btn-p" style="flex:1" id="docx-save-btn" onclick="saveDOCXQuestions()">
+        <i class="fa fa-database"></i> 全部存入題庫（<span id="docx-save-count">0</span> 題）
+      </button>
+    </div>
+  </div>
+
+  <!-- Step 3: Done -->
+  <div id="docx-step-done" style="display:none;text-align:center;padding:30px 0">
+    <i class="fa fa-circle-check" style="font-size:3rem;color:var(--emerald);margin-bottom:14px;display:block"></i>
+    <div style="font-size:1.1rem;font-weight:700;color:var(--text);margin-bottom:6px">匯入完成！</div>
+    <div style="font-size:.84rem;color:var(--text-m)" id="docx-done-msg">成功匯入 0 題到題庫</div>
+    <div style="display:flex;gap:8px;justify-content:center;margin-top:20px">
+      <button class="btn btn-g" onclick="resetDOCXImport()"><i class="fa fa-plus"></i> 繼續匯入</button>
+      <button class="btn btn-p" onclick="closeDOCXImportModal();goTeacherSection('qbank')">
         <i class="fa fa-database"></i> 查看題庫
       </button>
     </div>
@@ -9272,6 +9357,103 @@ async function saveJSONQuestions() {
   toast(`✅ 已匯入 ${saved} 題到題庫`, 'ok');
 }
 /* ══ END JSON 匯入 ══ */
+
+/* ═══════════════════════════════════════════════════════
+   DOCX 匯入  EduFlow v4.6（多出版社）
+   C1：上傳入口 + magic bytes 擋 .doc
+   C2~C6 待補：呼叫 docx-extract function、切題、圖片對齊
+════════════════════════════════════════════════════════ */
+const _docxData = { file: null, html: '', publisher: null, questions: [] };
+
+function openDOCXImportModal() {
+  resetDOCXImport();
+  document.getElementById('docx-import-modal').classList.add('show');
+}
+function closeDOCXImportModal() {
+  closeModal('docx-import-modal');
+}
+function resetDOCXImport() {
+  const $ = id => document.getElementById(id);
+  if ($('docx-file-input'))      $('docx-file-input').value = '';
+  if ($('docx-file-info'))       $('docx-file-info').style.display = 'none';
+  if ($('docx-detected-publisher')) $('docx-detected-publisher').textContent = '尚未解析';
+  if ($('docx-parse-btn')) {
+    $('docx-parse-btn').disabled = true;
+    $('docx-parse-btn').innerHTML = '<i class="fa fa-magnifying-glass"></i> 解析 DOCX（請先選檔）';
+  }
+  if ($('docx-step-upload'))  $('docx-step-upload').style.display  = 'block';
+  if ($('docx-step-preview')) $('docx-step-preview').style.display = 'none';
+  if ($('docx-step-done'))    $('docx-step-done').style.display    = 'none';
+  _docxData.file        = null;
+  _docxData.html        = '';
+  _docxData.publisher   = null;
+  _docxData.questions   = [];
+}
+function docxBackToUpload() {
+  document.getElementById('docx-step-upload').style.display  = 'block';
+  document.getElementById('docx-step-preview').style.display = 'none';
+  document.getElementById('docx-step-done').style.display    = 'none';
+}
+
+function handleDocxDrop(event) {
+  const f = event.dataTransfer?.files?.[0];
+  if (!f) return;
+  // 同步到 input.files 以便走同一條路徑
+  const input = document.getElementById('docx-file-input');
+  const dt = new DataTransfer();
+  dt.items.add(f);
+  input.files = dt.files;
+  handleDocxUpload(input);
+}
+
+async function handleDocxUpload(input) {
+  const file = input.files?.[0];
+  if (!file) return;
+
+  // ── magic bytes 檢查 ──
+  const buf = await file.slice(0, 8).arrayBuffer();
+  const bytes = new Uint8Array(buf);
+
+  // .docx 是 ZIP，magic: 50 4B
+  if (!(bytes[0] === 0x50 && bytes[1] === 0x4B)) {
+    // 是 .doc CFB 格式 → 友善提示
+    if (bytes[0] === 0xD0 && bytes[1] === 0xCF) {
+      toast('此為舊版 .doc 格式。請用 Word 或 LibreOffice 開啟後選「另存新檔」→ 選「Word 文件 (.docx)」再重新上傳', 'er');
+    } else {
+      toast('檔案格式不正確，請上傳 .docx 檔案', 'er');
+    }
+    input.value = '';
+    return;
+  }
+
+  // ── 大小上限（10 MB）──
+  if (file.size > 10 * 1024 * 1024) {
+    toast(`檔案太大（${(file.size/1024/1024).toFixed(1)} MB），請壓縮後再上傳（上限 10 MB）`, 'er');
+    input.value = '';
+    return;
+  }
+
+  // ── 接受 ──
+  _docxData.file = file;
+  const $ = id => document.getElementById(id);
+  $('docx-file-name').textContent = file.name;
+  $('docx-file-size').textContent = `(${(file.size/1024).toFixed(1)} KB)`;
+  $('docx-file-info').style.display = 'block';
+  $('docx-parse-btn').disabled = false;
+  $('docx-parse-btn').innerHTML = '<i class="fa fa-magnifying-glass"></i> 解析 DOCX';
+  toast(`✅ 已收到 ${file.name}`, 'ok');
+}
+
+async function parseDOCXFile() {
+  // C2 才會把這裡接上 docx-extract function
+  toast('解析功能尚未啟用（C2 待完成）', 'in');
+}
+
+async function saveDOCXQuestions() {
+  // C5 之後實作
+  toast('儲存功能尚未啟用', 'in');
+}
+/* ══ END DOCX 匯入 ══ */
 
 /* ═══════════════════════════════════════════════════════
    填補圖片功能  EduFlow v4.3
