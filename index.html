@@ -9400,8 +9400,10 @@ function resetDOCXImport() {
   if ($('docx-step-upload'))  $('docx-step-upload').style.display  = 'block';
   if ($('docx-step-preview')) $('docx-step-preview').style.display = 'none';
   if ($('docx-step-done'))    $('docx-step-done').style.display    = 'none';
+  if ($('docx-cards'))        $('docx-cards').innerHTML = '';
   _docxData.file        = null;
   _docxData.html        = '';
+  _docxData.fallbacks   = {};
   _docxData.publisher   = null;
   _docxData.questions   = [];
 }
@@ -9856,9 +9858,24 @@ function _parseDOCXQuestions(html, publisher) {
           subAnswers:      null,
         };
       }
-    } else if (tag === 'P' && currentQ) {
+    } else if (tag === 'P') {
       const text = (node.textContent || '').trim();
       if (!text) continue;
+
+      // 章節 marker 也可能藏在 <p><strong>...</strong></p>（南一/康軒格式）
+      const strong = node.querySelector('strong');
+      if (strong) {
+        const strongText = (strong.textContent || '').trim();
+        const sectionKey = Object.keys(rules.sectionMap)
+          .sort((a, b) => b.length - a.length)
+          .find(k => strongText.includes(k));
+        if (sectionKey && strongText.length < 60) {
+          flush();
+          currentSection = rules.sectionMap[sectionKey];
+          continue;
+        }
+      }
+      if (!currentQ) continue;
 
       // 答案
       const ansMatch = text.match(rules.answerRe);
