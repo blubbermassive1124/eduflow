@@ -9720,7 +9720,8 @@ function _splitOptionsFromContent(html, optionRe) {
   while ((m = optionRe.exec(text)) !== null) {
     const key = _normalizeAnswerCh(m[1]);
     const val = (m[2] || '').trim().replace(/[。\.]+$/, '').trim();
-    if (key && val) options[key] = val;
+    // 即使 val 為空也保留 — 表示這選項內容可能是圖片（C6 處理）
+    if (key) options[key] = val || '(圖片或空白)';
   }
 
   // content = 第一個選項之前的部分（保留 HTML 結構）
@@ -9877,21 +9878,28 @@ function _parseDOCXQuestions(html, publisher) {
       }
       if (!currentQ) continue;
 
-      // 答案
+      // ── 答案處理：依題型分流 ──
+      // 1. 翰林是非題的多 sub 答案：「答案：(１)○；(２)╳」
+      if (currentQ.question_type === 'true_false' && currentQ.subQuestions.length > 0 && /答案[：:]/.test(text)) {
+        const subAns = {};
+        let m;
+        const subAnsRe = /[（(]\s*([０-９0-9一二三四五六七八九十]+)\s*[）)]\s*([○╳])/g;
+        while ((m = subAnsRe.exec(text)) !== null) {
+          subAns[_normNum(m[1])] = m[2];
+        }
+        currentQ.subAnswers = subAns;
+        continue;
+      }
+      // 2. 填充題答案：任意字串（數字、文字、混合）
+      if (currentQ.question_type === 'fill') {
+        // 翰林南一：答案：xxx；康軒：《答案》xxx（剝掉歷年標 【XXX】）
+        const fillM = text.match(/^(?:答案[：:]|《答案》)\s*(.+?)(?:\s*【.+】.*)?$/);
+        if (fillM) { currentQ.answer = fillM[1].trim(); continue; }
+      }
+      // 3. 單選題答案（ABCD）
       const ansMatch = text.match(rules.answerRe);
       if (ansMatch) {
-        // 翰林是非題的多 sub 答案：「(１)○；(２)╳」
-        if (currentQ.subQuestions.length > 0) {
-          const subAns = {};
-          let m;
-          const subAnsRe = /[（(]\s*([０-９0-9一二三四五六七八九十]+)\s*[）)]\s*([○╳])/g;
-          while ((m = subAnsRe.exec(text)) !== null) {
-            subAns[_normNum(m[1])] = m[2];
-          }
-          currentQ.subAnswers = subAns;
-        } else {
-          currentQ.answer = _normalizeAnswerCh(ansMatch[1]);
-        }
+        currentQ.answer = _normalizeAnswerCh(ansMatch[1]);
         continue;
       }
 
