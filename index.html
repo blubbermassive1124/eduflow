@@ -962,6 +962,14 @@ a { color: var(--indigo); }
   font-size: .82rem; font-style: italic;
   margin: 0 2px;
 }
+.docx-html-preview .formula-rendered {
+  background: rgba(255,255,255,.55);
+  border: 1px solid rgba(99,102,241,.15);
+  padding: 2px 4px; border-radius: 3px;
+  vertical-align: middle;
+  /* 強制公式去飽和 + 反白，避免康軒類綠色字干擾閱讀 */
+  filter: grayscale(1) contrast(1.4);
+}
 .gas-q-card {
   background:var(--surface); border:1px solid var(--border);
   border-radius:var(--r-lg); padding:.85rem 1rem;
@@ -9509,13 +9517,8 @@ async function parseDOCXFile() {
       _docxData.html = tmp.innerHTML;
     }
 
-    // C5 才會切題；C2 先讓你知道解析成功、看到 HTML 規模
     const fbCount = data.stats?.fallbacks || 0;
-    const fbNote  = fbCount ? `，${fbCount} 個公式 fallback（C4 才轉 SVG）` : '';
-    toast(`✅ 解析成功：HTML ${(data.html?.length || 0).toLocaleString()} 字${fbNote}`, 'ok');
-
-    btn.disabled  = false;
-    btn.innerHTML = '<i class="fa fa-check"></i> 已解析（C5 才會切題）';
+    toast(`✅ 解析成功：HTML ${(data.html?.length || 0).toLocaleString()} 字${fbCount?`，${fbCount} 個公式待還原` : ''}`, 'ok');
 
     // C5 之前先暫時把原始 HTML 顯示在預覽區，讓你看得到內容
     const $ = id => document.getElementById(id);
@@ -9531,6 +9534,27 @@ async function parseDOCXFile() {
     document.getElementById('docx-save-btn').innerHTML = '<i class="fa fa-database"></i> 等 C5 才能存入';
     document.getElementById('docx-step-upload').style.display  = 'none';
     document.getElementById('docx-step-preview').style.display = 'block';
+
+    // ── C4：把 EMF/WMF fallback 還原成 PNG，替換預覽區的 chip ──
+    if (fbCount > 0) {
+      btn.innerHTML = `<i class="fa fa-spinner fa-spin"></i> 還原 ${fbCount} 個公式預覽圖...`;
+      try {
+        const { converted, failed, dataUrls } = await _convertDOCXFallbacksToImages();
+        if (converted > 0) _renderDOCXPreviewWithFormulas(dataUrls);
+        toast(
+          failed === 0
+            ? `✅ 公式還原：${converted} 張全部成功`
+            : `公式還原：${converted} 成功 / ${failed} 失敗（失敗者保留 chip）`,
+          failed === 0 ? 'ok' : 'in'
+        );
+      } catch (e) {
+        console.error('公式還原失敗:', e);
+        toast(`公式還原失敗：${e.message}（保留 chip 顯示）`, 'er');
+      }
+    }
+
+    btn.disabled  = false;
+    btn.innerHTML = '<i class="fa fa-check"></i> 已解析（C5 才會切題）';
   } catch (e) {
     console.error('docx-extract err:', e);
     toast(`解析失敗：${e.message}`, 'er');
@@ -9542,6 +9566,76 @@ async function parseDOCXFile() {
 async function saveDOCXQuestions() {
   // C5 之後實作
   toast('儲存功能尚未啟用', 'in');
+}
+
+/* ── C4：EMF/WMF → PNG dataURL（emf-converter from jsdelivr CDN）── */
+let _emfConverterMod = null;
+async function _loadEmfConverter() {
+  if (_emfConverterMod) return _emfConverterMod;
+  // dynamic import；版本固定避免 breaking change
+  _emfConverterMod = await import('https://cdn.jsdelivr.net/npm/emf-converter@1.1.3/dist/index.mjs');
+  return _emfConverterMod;
+}
+
+async function _convertDOCXFallbacksToImages() {
+  const fb = _docxData.fallbacks || {};
+  const ids = Object.keys(fb);
+  if (!ids.length) return { converted: 0, failed: 0, dataUrls: {} };
+
+  const { convertEmfToDataUrl, convertWmfToDataUrl } = await _loadEmfConverter();
+
+  const dataUrls = {};
+  let converted = 0, failed = 0;
+
+  for (const id of ids) {
+    try {
+      const buf = Uint8Array.from(atob(fb[id]), c => c.charCodeAt(0)).buffer;
+      // Magic bytes routing：EMF 開頭 01 00 00 00；其他都試 WMF
+      const view = new Uint8Array(buf);
+      const isEmf = view[0] === 0x01 && view[1] === 0x00 && view[2] === 0x00 && view[3] === 0x00;
+
+      let url = isEmf
+        ? await convertEmfToDataUrl(buf, 800, 600)
+        : await convertWmfToDataUrl(buf, 800, 600);
+
+      // 第一次失敗就試另一個 (有些 WMF 偽裝成 EMF 開頭，反之亦然)
+      if (!url) {
+        url = isEmf
+          ? await convertWmfToDataUrl(buf, 800, 600)
+          : await convertEmfToDataUrl(buf, 800, 600);
+      }
+
+      if (url) { dataUrls[id] = url; converted++; }
+      else     { failed++; }
+    } catch (e) {
+      console.warn(`公式 #${id} 還原失敗:`, e);
+      failed++;
+    }
+  }
+  return { converted, failed, dataUrls };
+}
+
+function _renderDOCXPreviewWithFormulas(dataUrls) {
+  // 把 _docxData.html 內 span.formula-fallback 替換成 img.formula-rendered
+  const tmp = document.createElement('div');
+  tmp.innerHTML = _docxData.html;
+  tmp.querySelectorAll('span.formula-fallback').forEach(span => {
+    const m = (span.textContent || '').match(/#(\d+)/);
+    if (!m) return;
+    const id  = m[1];
+    const url = dataUrls[id];
+    if (!url) return;
+    const img = document.createElement('img');
+    img.src       = url;
+    img.alt       = `[公式#${id}]`;
+    img.className = 'formula-rendered';
+    span.replaceWith(img);
+  });
+  _docxData.html = tmp.innerHTML;
+
+  // 重新塞回預覽區
+  const previewDiv = document.querySelector('#docx-cards .docx-html-preview');
+  if (previewDiv) previewDiv.innerHTML = _docxData.html;
 }
 /* ══ END DOCX 匯入 ══ */
 
