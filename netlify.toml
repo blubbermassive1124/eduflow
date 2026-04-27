@@ -1,0 +1,16 @@
+# EduFlow Netlify 設定
+# 前端仍是純靜態 index.html；本檔僅為了讓 Netlify 認得 functions 目錄。
+
+[build]
+  publish = "."
+  functions = "netlify/functions"
+
+[functions]
+  node_bundler = "esbuild"
+  # mammoth 體積較大且依賴 xmldom/JSZip，走 external 比較穩定
+  external_node_modules = ["mammoth"]
+
+# 本地開發用 (netlify dev) — 生產不影響
+[dev]
+  publish = "."
+  port = 8888

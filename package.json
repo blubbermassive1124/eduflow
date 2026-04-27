@@ -1,0 +1,9 @@
+{
+  "name": "eduflow",
+  "version": "4.6.0",
+  "private": true,
+  "description": "EduFlow — DOCX 預處理 Netlify functions 依賴清單（前端仍走純靜態 index.html）",
+  "dependencies": {
+    "mammoth": "^1.7.2"
+  }
+}

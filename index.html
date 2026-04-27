@@ -9426,9 +9426,10 @@ async function handleDocxUpload(input) {
     return;
   }
 
-  // ── 大小上限（10 MB）──
-  if (file.size > 10 * 1024 * 1024) {
-    toast(`檔案太大（${(file.size/1024/1024).toFixed(1)} MB），請壓縮後再上傳（上限 10 MB）`, 'er');
+  // ── 大小上限（4 MB）──
+  // Netlify functions 請求 body 上限 6 MB；base64 會膨脹 4/3 倍，留安全餘裕設 4 MB binary。
+  if (file.size > 4 * 1024 * 1024) {
+    toast(`檔案太大（${(file.size/1024/1024).toFixed(1)} MB），請壓縮後再上傳（上限 4 MB）`, 'er');
     input.value = '';
     return;
   }
@@ -9445,8 +9446,67 @@ async function handleDocxUpload(input) {
 }
 
 async function parseDOCXFile() {
-  // C2 才會把這裡接上 docx-extract function
-  toast('解析功能尚未啟用（C2 待完成）', 'in');
+  const file = _docxData.file;
+  if (!file) { toast('請先選檔', 'er'); return; }
+
+  const btn = document.getElementById('docx-parse-btn');
+  btn.disabled  = true;
+  btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> 上傳並解析中...';
+
+  try {
+    // file → base64（去掉 data:...;base64, 前綴）
+    const b64 = await new Promise((resolve, reject) => {
+      const r = new FileReader();
+      r.onload  = () => resolve(String(r.result).split(',')[1]);
+      r.onerror = () => reject(r.error || new Error('讀檔失敗'));
+      r.readAsDataURL(file);
+    });
+
+    const resp = await fetch('/.netlify/functions/docx-extract', {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({ docxBase64: b64 }),
+    });
+
+    if (!resp.ok) {
+      let err;
+      try { err = await resp.json(); } catch { err = { error: `HTTP ${resp.status}` }; }
+      throw new Error(err.error || `HTTP ${resp.status}`);
+    }
+
+    const data = await resp.json();
+    _docxData.html      = data.html      || '';
+    _docxData.fallbacks = data.fallbacks || {};
+    _docxData.stats     = data.stats     || {};
+
+    // C5 才會切題；C2 先讓你知道解析成功、看到 HTML 規模
+    const fbCount = data.stats?.fallbacks || 0;
+    const fbNote  = fbCount ? `，${fbCount} 個公式 fallback（C4 才轉 SVG）` : '';
+    toast(`✅ 解析成功：HTML ${(data.html?.length || 0).toLocaleString()} 字${fbNote}`, 'ok');
+
+    btn.disabled  = false;
+    btn.innerHTML = '<i class="fa fa-check"></i> 已解析（C5 才會切題）';
+
+    // C5 之前先暫時把原始 HTML 顯示在預覽區，讓你看得到內容
+    const $ = id => document.getElementById(id);
+    $('docx-q-count').textContent = '—';
+    $('docx-cards').innerHTML = `
+      <div style="padding:12px;background:rgba(99,102,241,.04);border:1px solid var(--border);border-radius:var(--r-lg);max-height:50vh;overflow:auto">
+        <div style="font-size:.78rem;color:var(--text-l);margin-bottom:8px">
+          ▼ 原始 HTML 預覽（C5 之前用來人工確認 mammoth 抽取品質）
+        </div>
+        <div style="font-size:.85rem;line-height:1.6;color:var(--text)">${data.html || '<em>(空)</em>'}</div>
+      </div>`;
+    document.getElementById('docx-save-btn').disabled = true;
+    document.getElementById('docx-save-btn').innerHTML = '<i class="fa fa-database"></i> 等 C5 才能存入';
+    document.getElementById('docx-step-upload').style.display  = 'none';
+    document.getElementById('docx-step-preview').style.display = 'block';
+  } catch (e) {
+    console.error('docx-extract err:', e);
+    toast(`解析失敗：${e.message}`, 'er');
+    btn.disabled  = false;
+    btn.innerHTML = '<i class="fa fa-magnifying-glass"></i> 解析 DOCX';
+  }
 }
 
 async function saveDOCXQuestions() {
