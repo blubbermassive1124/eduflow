@@ -10,6 +10,7 @@
 - 前端：單一 index.html（所有功能整合，9000+ 行）
 - 後端：Supabase（auth + PostgreSQL + JSONB 欄位）
 - AI 呼叫：**前端直連架構**，瀏覽器直接 fetch `https://api.anthropic.com/v1/messages`，沒有 serverless proxy
+- DOCX 預處理：**有** Netlify function `docx-extract`，職責限定為 mammoth 抽取 + WMF→SVG 轉換，僅接受 .docx（前端會擋 .doc）
 - API Key 儲存：每位使用者把自己的 Claude API Key 存在 Supabase `profiles.api_keys` JSONB 欄位，屬性名 `claudeKey`
 - 部署：Netlify（自動偵測 GitHub push，純靜態托管）
 - 網址：https://rickstests.netlify.app

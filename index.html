@@ -1913,6 +1913,7 @@ a { color: var(--indigo); }
             <input class="inp" id="qb-search" placeholder="搜尋題目..." oninput="loadQuestionBank()"/></div>
           <button class="btn btn-p btn-sm" onclick="openUploadDoc()"><i class="fa fa-file-import"></i> 匯入題目</button>
           <button class="btn btn-g btn-sm" onclick="openGASImportModal()"><i class="fa fa-code"></i> GAS 匯入</button>
+          <button class="btn btn-g btn-sm" onclick="openJSONImportModal()"><i class="fa fa-file-code"></i> JSON 匯入</button>
           <button class="btn btn-g btn-sm" id="fill-img-btn" onclick="openFillImagesModal()" style="display:none">
             <i class="fa fa-image" style="color:var(--warning)"></i> 填補圖片 <span id="fill-img-badge" class="gas-badge gas-badge-img" style="margin-left:2px"></span>
           </button>
@@ -2916,6 +2917,80 @@ a { color: var(--indigo); }
     <div style="display:flex;gap:8px;justify-content:center;margin-top:20px">
       <button class="btn btn-g" onclick="resetGASImport()"><i class="fa fa-plus"></i> 繼續匯入</button>
       <button class="btn btn-p" onclick="closeGASImportModal();goTeacherSection('qbank')">
+        <i class="fa fa-database"></i> 查看題庫
+      </button>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ═══════════════ JSON 匯入 Modal ═══════════════ -->
+<div id="json-import-modal" class="modal-ov">
+<div class="modal-box" style="max-width:760px;max-height:90vh;overflow-y:auto">
+  <div class="modal-hdr">
+    <div class="modal-title"><i class="fa fa-file-code" style="color:var(--indigo)"></i> JSON 批次匯入</div>
+    <button class="btn btn-g btn-ico" onclick="closeJSONImportModal()"><i class="fa fa-xmark"></i></button>
+  </div>
+
+  <!-- Step 1: Paste -->
+  <div id="json-step-paste">
+    <div class="gas-how-to">
+      <h4>📥 JSON 格式說明</h4>
+      <ol>
+        <li>頂層需含 <code>questions</code> 陣列；可選頂層 <code>publisher</code> / <code>subject</code> 作為預設</li>
+        <li>每題必填：<code>content</code>、<code>question_type</code>（single / fill / group）、<code>answer</code></li>
+        <li><code>options</code> 可寫成 <code>{"A":"...", "B":"..."}</code> 或陣列；填充題可省略</li>
+        <li>選填：<code>publisher</code>、<code>subject</code>、<code>knowledge_point</code>、<code>difficulty</code>（easy / medium / hard）、<code>explanation</code>、<code>image_data</code>、<code>figure_desc</code></li>
+      </ol>
+    </div>
+
+    <div class="gas-code-area">
+      <div class="gas-code-label">
+        <span><i class="fa fa-file-code"></i> 貼上 JSON 內容</span>
+        <span id="json-char-count" style="opacity:.5">0 字元</span>
+      </div>
+      <textarea id="json-input"
+        placeholder='{&#10;  "publisher": "翰林",&#10;  "subject": "數學",&#10;  "questions": [&#10;    {&#10;      "content": "2 + 3 = ?",&#10;      "question_type": "fill",&#10;      "answer": "5",&#10;      "difficulty": "easy"&#10;    }&#10;  ]&#10;}'
+        oninput="document.getElementById('json-char-count').textContent=this.value.length+' 字元'"></textarea>
+    </div>
+
+    <button class="btn btn-p" style="width:100%" onclick="parseJSONImport()">
+      <i class="fa fa-magnifying-glass"></i> 解析 JSON（本地執行，不呼叫 AI）
+    </button>
+  </div>
+
+  <!-- Step 2: Preview -->
+  <div id="json-step-preview" style="display:none">
+    <div class="fx ai-c jb mb3">
+      <div>
+        <div style="font-size:.9rem;font-weight:600;color:var(--text)">解析結果預覽</div>
+        <div style="font-size:.78rem;color:var(--text-l)">
+          共 <strong id="json-q-count" style="color:var(--indigo)">0</strong> 題，確認後存入題庫
+        </div>
+      </div>
+      <button class="btn btn-g btn-sm" onclick="jsonBackToPaste()">
+        <i class="fa fa-arrow-left"></i> 重新貼上
+      </button>
+    </div>
+
+    <div class="gas-cards-scroll" id="json-cards"></div>
+
+    <div style="display:flex;gap:8px;margin-top:14px;border-top:1px solid var(--border);padding-top:14px">
+      <button class="btn btn-g" onclick="closeJSONImportModal()"><i class="fa fa-xmark"></i> 取消</button>
+      <button class="btn btn-p" style="flex:1" id="json-save-btn" onclick="saveJSONQuestions()">
+        <i class="fa fa-database"></i> 全部存入題庫（<span id="json-save-count">0</span> 題）
+      </button>
+    </div>
+  </div>
+
+  <!-- Step 3: Done -->
+  <div id="json-step-done" style="display:none;text-align:center;padding:30px 0">
+    <i class="fa fa-circle-check" style="font-size:3rem;color:var(--emerald);margin-bottom:14px;display:block"></i>
+    <div style="font-size:1.1rem;font-weight:700;color:var(--text);margin-bottom:6px">匯入完成！</div>
+    <div style="font-size:.84rem;color:var(--text-m)" id="json-done-msg">成功匯入 0 題到題庫</div>
+    <div style="display:flex;gap:8px;justify-content:center;margin-top:20px">
+      <button class="btn btn-g" onclick="resetJSONImport()"><i class="fa fa-plus"></i> 繼續匯入</button>
+      <button class="btn btn-p" onclick="closeJSONImportModal();goTeacherSection('qbank')">
         <i class="fa fa-database"></i> 查看題庫
       </button>
     </div>
@@ -4628,14 +4703,25 @@ function renderQuizQuestion() {
   const sel = APP.quizState.answers[idx];
   const optsEl = document.getElementById('q-opts');
   const keys = ['A','B','C','D','E'];
-  optsEl.innerHTML = q.options.map((opt,i) => {
-    const key = opt.key || keys[i];
-    const text = opt.text || opt;
-    const isSel = sel === key;
-    return `<div class="opt ${isSel?'sel':''}" onclick="selectOpt('${key}',this)">
-      <div class="opt-k">${key}</div><span>${text}</span>
-    </div>`;
-  }).join('');
+  if (q.question_type === 'fill') {
+    optsEl.innerHTML = `
+      <div class="iw" style="margin-top:8px">
+        <input class="inp" type="text" id="q-fill-input"
+               placeholder="請輸入答案"
+               value="${escHtml(sel || '')}"
+               oninput="onFillInput(this.value)" />
+      </div>`;
+    setTimeout(() => { const el = document.getElementById('q-fill-input'); if (el) el.focus(); }, 20);
+  } else {
+    optsEl.innerHTML = q.options.map((opt,i) => {
+      const key = opt.key || keys[i];
+      const text = opt.text || opt;
+      const isSel = sel === key;
+      return `<div class="opt ${isSel?'sel':''}" onclick="selectOpt('${key}',this)">
+        <div class="opt-k">${key}</div><span>${text}</span>
+      </div>`;
+    }).join('');
+  }
   // Dots
   const dotsEl = document.getElementById('q-dots');
   dotsEl.innerHTML = qs.map((_,i) => {
@@ -4658,6 +4744,19 @@ function selectOpt(key, el) {
   el.querySelector('.opt-k').textContent = key;
   APP.quizState.answers[APP.quizState.current] = key;
   renderQuizQuestion();
+}
+
+function onFillInput(val) {
+  APP.quizState.answers[APP.quizState.current] = val;
+}
+
+function normalizeFillAnswer(s) {
+  if (!s) return '';
+  return String(s)
+    .trim()
+    .replace(/\s+/g, '')
+    .replace(/[Ａ-Ｚａ-ｚ０-９]/g, ch => String.fromCharCode(ch.charCodeAt(0) - 0xFEE0))
+    .toLowerCase();
 }
 
 function quizNav(dir) {
@@ -4722,7 +4821,9 @@ async function submitQuiz(early=false) {
   const answerRows = [];
   questions.forEach((q,i) => {
     const sel = answers[i] || null;
-    const isOk = sel === q.answer;
+    const isOk = q.question_type === 'fill'
+      ? normalizeFillAnswer(sel) === normalizeFillAnswer(q.answer)
+      : sel === q.answer;
     if (isOk) correct++;
     answerRows.push({ attempt_id: APP.quizAttemptId, question_id: q.id, selected_option: sel, is_correct: isOk, time_spent_seconds: Math.round(timeSpent/questions.length) });
   });
@@ -8952,6 +9053,225 @@ function gasEscHtml(s) {
     .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 /* ══ END GAS 匯入 ══ */
+
+/* ═══════════════════════════════════════════════════════
+   JSON 匯入  EduFlow v4.5
+   流程：貼 JSON → 驗證 → 預覽 → 批次寫入 Supabase
+   無 AI 呼叫、無外部請求，純前端
+════════════════════════════════════════════════════════ */
+const _jsonData = { questions: [], topMeta: {} };
+
+function openJSONImportModal() {
+  resetJSONImport();
+  document.getElementById('json-import-modal').classList.add('show');
+}
+function closeJSONImportModal() {
+  closeModal('json-import-modal');
+}
+function resetJSONImport() {
+  const $ = id => document.getElementById(id);
+  if ($('json-input'))        $('json-input').value = '';
+  if ($('json-char-count'))   $('json-char-count').textContent = '0 字元';
+  if ($('json-step-paste'))   $('json-step-paste').style.display   = 'block';
+  if ($('json-step-preview')) $('json-step-preview').style.display = 'none';
+  if ($('json-step-done'))    $('json-step-done').style.display    = 'none';
+  _jsonData.questions = [];
+  _jsonData.topMeta   = {};
+}
+function jsonBackToPaste() {
+  document.getElementById('json-step-paste').style.display   = 'block';
+  document.getElementById('json-step-preview').style.display = 'none';
+  document.getElementById('json-step-done').style.display    = 'none';
+}
+
+function _normJSONOptions(opts) {
+  if (!opts) return {};
+  if (typeof opts === 'object' && !Array.isArray(opts)) {
+    const r = {};
+    ['A','B','C','D','E'].forEach(k => { if (opts[k]) r[k] = String(opts[k]); });
+    return r;
+  }
+  if (Array.isArray(opts)) {
+    const keys = ['A','B','C','D','E'];
+    const r = {};
+    opts.forEach((o, i) => {
+      if (i >= 5) return;
+      if (typeof o === 'string') {
+        if (o.trim()) r[keys[i]] = o;
+      } else if (o && typeof o === 'object') {
+        const k = o.key || keys[i];
+        const t = o.text || '';
+        if (t) r[k] = String(t);
+      }
+    });
+    return r;
+  }
+  return {};
+}
+
+function parseJSONImport() {
+  const raw = (document.getElementById('json-input')?.value || '').trim();
+  if (!raw) { toast('請先貼上 JSON 內容', 'er'); return; }
+
+  let data;
+  try { data = JSON.parse(raw); }
+  catch (e) { toast('JSON 格式錯誤：' + e.message, 'er'); return; }
+
+  if (!data || !Array.isArray(data.questions)) {
+    toast('JSON 必須包含 questions 陣列', 'er'); return;
+  }
+  if (!data.questions.length) {
+    toast('questions 陣列是空的', 'er'); return;
+  }
+
+  const topMeta = {
+    publisher: data.publisher || '自訂',
+    subject:   data.subject   || '',
+  };
+
+  const errs = [];
+  const norm = data.questions.map((q, i) => {
+    const lineLabel = `第 ${i+1} 題`;
+    const content = (q.content || '').toString().trim();
+    if (!content) errs.push(`${lineLabel}：缺少 content`);
+    const qt = q.question_type || 'single';
+    if (!['single','fill','group'].includes(qt)) {
+      errs.push(`${lineLabel}：question_type 必須為 single / fill / group`);
+    }
+    const ans = (q.answer ?? '').toString().trim();
+    if (!ans) errs.push(`${lineLabel}：缺少 answer`);
+
+    const options = qt === 'fill' ? {} : _normJSONOptions(q.options);
+    if (qt !== 'fill' && Object.keys(options).length < 2) {
+      errs.push(`${lineLabel}：選擇題至少要 2 個選項`);
+    }
+
+    return {
+      content,
+      question_type:   qt,
+      options,
+      answer:          ans,
+      explanation:     (q.explanation || '').toString(),
+      difficulty:      ['easy','medium','hard'].includes(q.difficulty) ? q.difficulty : 'medium',
+      knowledge_point: (q.knowledge_point || '').toString(),
+      publisher:       q.publisher || topMeta.publisher,
+      subject:         q.subject   || topMeta.subject,
+      image_data:      typeof q.image_data === 'string' && q.image_data.startsWith('data:') ? q.image_data : '',
+      figure_desc:     (q.figure_desc || '').toString(),
+    };
+  });
+
+  if (errs.length) {
+    toast(`格式有問題（${errs.length} 處）：${errs.slice(0,3).join('；')}${errs.length>3?'...':''}`, 'er');
+    return;
+  }
+
+  _jsonData.questions = norm;
+  _jsonData.topMeta   = topMeta;
+  renderJSONPreview(norm);
+}
+
+function renderJSONPreview(qs) {
+  const $ = id => document.getElementById(id);
+  $('json-q-count').textContent    = qs.length;
+  $('json-save-count').textContent = qs.length;
+
+  if (!qs.length) {
+    $('json-cards').innerHTML = `
+      <div style="text-align:center;padding:40px 0;color:var(--text-l)">
+        <i class="fa fa-magnifying-glass" style="font-size:2.2rem;opacity:.3;margin-bottom:12px;display:block"></i>
+        <div>沒有可預覽的題目</div>
+      </div>`;
+  } else {
+    $('json-cards').innerHTML = qs.map((q, i) => {
+      const tLabel = {single:'單選', fill:'填充', group:'題組'}[q.question_type] || '單選';
+      const badge  = `<span class="gas-badge ${q.question_type==='fill'?'gas-badge-tf':'gas-badge-mc'}">${tLabel}</span>`;
+      const dLabel = {easy:'易', medium:'中', hard:'難'}[q.difficulty] || '中';
+      const diffBadge = `<span class="gas-badge gas-badge-sc">${dLabel}</span>`;
+      const imgBadge  = q.image_data ? `<span class="gas-badge gas-badge-img"><i class="fa fa-image"></i> 含圖</span>` : '';
+
+      let body;
+      if (q.question_type === 'fill') {
+        body = `<div class="gas-opts"><div class="gas-opt ok">答案：${gasEscHtml(q.answer)} ✓</div></div>`;
+      } else {
+        const optHtml = Object.keys(q.options).map(k =>
+          `<div class="gas-opt${k === q.answer ? ' ok' : ''}">${k}. ${gasEscHtml(q.options[k])}${k === q.answer ? ' ✓' : ''}</div>`
+        ).join('');
+        body = `<div class="gas-opts">${optHtml}</div>`;
+      }
+
+      return `
+        <div class="gas-q-card" id="json-card-${i}">
+          <div class="gas-q-card-hdr">
+            <span style="font-size:.75rem;font-weight:700;color:var(--indigo)">第 ${i+1} 題</span>
+            ${badge}${diffBadge}${imgBadge}
+            <button class="gas-q-card-del" onclick="deleteJSONQ(${i})" title="移除此題">
+              <i class="fa fa-xmark"></i>
+            </button>
+          </div>
+          <div class="gas-q-text">${gasEscHtml(q.content).replace(/\n/g, '<br>')}</div>
+          ${body}
+        </div>`;
+    }).join('');
+  }
+
+  $('json-step-paste').style.display   = 'none';
+  $('json-step-preview').style.display = 'block';
+  $('json-step-done').style.display    = 'none';
+}
+
+function deleteJSONQ(i) {
+  _jsonData.questions.splice(i, 1);
+  renderJSONPreview(_jsonData.questions);
+}
+
+async function saveJSONQuestions() {
+  const qs = _jsonData.questions;
+  if (!qs.length) { toast('沒有可儲存的題目', 'er'); return; }
+
+  const btn = document.getElementById('json-save-btn');
+  btn.disabled  = true;
+  btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> 儲存中...';
+
+  let saved = 0, failed = 0;
+  for (const q of qs) {
+    try {
+      const row = {
+        content:         q.content,
+        question_type:   q.question_type,
+        options:         q.options,
+        answer:          q.answer,
+        explanation:     q.explanation,
+        difficulty:      q.difficulty,
+        knowledge_point: q.knowledge_point,
+        publisher:       q.publisher,
+        subject:         q.subject,
+        tags:            [],
+        status:          'approved',
+        created_by:      APP.user?.id || null,
+      };
+      if (q.image_data) {
+        row.image_data  = q.image_data;
+        row.figure_desc = q.figure_desc || '';
+      }
+      const { error } = await sb.from('questions').insert(row);
+      if (error) { console.error('JSON save err:', error); failed++; }
+      else saved++;
+    } catch(e) { console.error('JSON save exception:', e); failed++; }
+  }
+
+  btn.disabled  = false;
+  btn.innerHTML = `<i class="fa fa-database"></i> 全部存入題庫（${qs.length} 題）`;
+
+  const failNote = failed > 0 ? `，${failed} 題失敗` : '';
+  document.getElementById('json-done-msg').textContent = `成功匯入 ${saved} 題${failNote}`;
+  document.getElementById('json-step-preview').style.display = 'none';
+  document.getElementById('json-step-done').style.display    = 'block';
+
+  if (saved > 0 && typeof loadQuestionBank === 'function') loadQuestionBank();
+  toast(`✅ 已匯入 ${saved} 題到題庫`, 'ok');
+}
+/* ══ END JSON 匯入 ══ */
 
 /* ═══════════════════════════════════════════════════════
    填補圖片功能  EduFlow v4.3
