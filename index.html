@@ -9510,28 +9510,41 @@ async function parseDOCXFile() {
     }
 
     const fbCount = data.stats?.fallbacks || 0;
-    toast(`✅ 解析成功：HTML ${(data.html?.length || 0).toLocaleString()} 字${fbCount?`，${fbCount} 個公式待還原` : ''}`, 'ok');
 
-    // C5 之前先暫時把原始 HTML 顯示在預覽區，讓你看得到內容
-    const $ = id => document.getElementById(id);
-    $('docx-q-count').textContent = '—';
-    $('docx-cards').innerHTML = `
-      <div style="padding:12px;background:rgba(99,102,241,.04);border:1px solid var(--border);border-radius:var(--r-lg);max-height:50vh;overflow:auto">
-        <div style="font-size:.78rem;color:var(--text-l);margin-bottom:8px">
-          ▼ 原始 HTML 預覽（C5 之前用來人工確認 mammoth 抽取品質）
-        </div>
-        <div class="docx-html-preview" style="font-size:.85rem;line-height:1.6;color:var(--text)">${_docxData.html || '<em>(空)</em>'}</div>
-      </div>`;
-    document.getElementById('docx-save-btn').disabled = true;
-    document.getElementById('docx-save-btn').innerHTML = '<i class="fa fa-database"></i> 等 C5 才能存入';
+    // ── C5：偵測出版社、切題、預覽 ──
+    const plainText = (() => {
+      const t = document.createElement('div');
+      t.innerHTML = _docxData.html;
+      return t.textContent || '';
+    })();
+    const publisher = _detectDOCXPublisher(plainText);
+    _docxData.publisher = publisher;
+
+    if (!publisher) {
+      toast(`✅ 解析成功，但無法自動偵測出版社（HTML ${(data.html?.length || 0).toLocaleString()} 字）`, 'er');
+      btn.disabled  = false;
+      btn.innerHTML = '<i class="fa fa-magnifying-glass"></i> 解析 DOCX';
+      return;
+    }
+
+    document.getElementById('docx-detected-publisher').textContent = publisher;
+
+    const { questions, errors } = _parseDOCXQuestions(_docxData.html, publisher);
+    _docxData.questions = questions;
+
+    toast(
+      errors.length
+        ? `解析完成：${questions.length} 題（${errors.length} 處警告，${fbCount} 個公式 chip）`
+        : `✅ 解析完成：${publisher} ${questions.length} 題${fbCount?`，${fbCount} 個公式 chip` : ''}`,
+      errors.length ? 'in' : 'ok'
+    );
+
+    _renderDOCXQuestionPreview(questions);
     document.getElementById('docx-step-upload').style.display  = 'none';
     document.getElementById('docx-step-preview').style.display = 'block';
 
-    // 註：emf-converter 直接渲染（C4 v1）已撤——公式失真到誤導；C7 改用 AI Vision 拼貼辨識為 LaTeX。
-    // _convertDOCXFallbacksToImages() 仍保留供 C7 拼貼前 EMF→PNG 用。
-
     btn.disabled  = false;
-    btn.innerHTML = '<i class="fa fa-check"></i> 已解析（C5 才會切題）';
+    btn.innerHTML = '<i class="fa fa-check"></i> 解析完成';
   } catch (e) {
     console.error('docx-extract err:', e);
     toast(`解析失敗：${e.message}`, 'er');
@@ -9541,8 +9554,412 @@ async function parseDOCXFile() {
 }
 
 async function saveDOCXQuestions() {
-  // C5 之後實作
-  toast('儲存功能尚未啟用', 'in');
+  const qs = _docxData.questions;
+  if (!qs?.length) { toast('沒有可儲存的題目', 'er'); return; }
+
+  const btn = document.getElementById('docx-save-btn');
+  btn.disabled  = true;
+  btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> 儲存中...';
+
+  let saved = 0, failed = 0;
+  for (const q of qs) {
+    try {
+      const row = {
+        content:         q.content,
+        question_type:   q.question_type === 'true_false' ? 'single' : q.question_type,
+        options:         q.options,
+        answer:          q.answer,
+        explanation:     q.explanation || '',
+        difficulty:      q.difficulty   || 'medium',
+        knowledge_point: q.knowledge_point || '',
+        publisher:       q.publisher   || _docxData.publisher || '自訂',
+        subject:         q.subject     || '數學',
+        tags:            [],
+        status:          'approved',
+        created_by:      APP.user?.id || null,
+      };
+      if (q.image_data) {
+        row.image_data  = q.image_data;
+        row.figure_desc = q.figure_desc || '';
+      }
+      const { error } = await sb.from('questions').insert(row);
+      if (error) { console.error('DOCX save err:', error); failed++; }
+      else saved++;
+    } catch(e) { console.error('DOCX save exception:', e); failed++; }
+  }
+
+  btn.disabled  = false;
+  btn.innerHTML = `<i class="fa fa-database"></i> 全部存入題庫（${qs.length} 題）`;
+
+  const failNote = failed > 0 ? `，${failed} 題失敗` : '';
+  document.getElementById('docx-done-msg').textContent = `成功匯入 ${saved} 題${failNote}`;
+  document.getElementById('docx-step-preview').style.display = 'none';
+  document.getElementById('docx-step-done').style.display    = 'block';
+
+  if (saved > 0 && typeof loadQuestionBank === 'function') loadQuestionBank();
+  toast(`✅ 已匯入 ${saved} 題到題庫`, 'ok');
+}
+
+function deleteDOCXQ(i) {
+  _docxData.questions.splice(i, 1);
+  _renderDOCXQuestionPreview(_docxData.questions);
+}
+
+/* ── C5：publisher 偵測 + 切題 ── */
+const _DOCX_PUBLISHER_RULES = {
+  '翰林': {
+    sectionMap: {
+      '是非題':         'true_false',
+      '單一選擇題':     'single',
+      '選擇題':         'single',
+      '非選擇題-填充': 'fill',
+      '填充':           'fill',
+    },
+    answerRe:      /答案：[（(]?\s*([Ａ-ＤA-D○╳])\s*[）)]?/,
+    explanationRe: /解析：([\s\S]+)/,
+    difficultyRe:  /難易度：([易中難])/,
+    sourceRe:      /出處：(.+)/,
+    knowledgeRe:   /知識向度：(.+)/,
+    cognitionRe:   /認知向度：(.+)/,
+    optionRe:      /[（(]([ＡＢＣＤA-D])[）)]\s*([^（()<]+?)(?=[（(][ＡＢＣＤA-D][）)]|$|。)/g,
+    fillBlankRe:   /【　+】/g,
+  },
+  '南一': {
+    sectionMap: {
+      '單選題':         'single',
+      '單一選擇題':     'single',
+      '選擇題':         'single',
+      '填充題':         'fill',
+      '非選題':         'fill',
+      '是非題':         'true_false',
+    },
+    answerRe:      /答案：[（(]?\s*([A-D○╳])\s*[）)]?/,
+    explanationRe: /解析：([\s\S]+)/,
+    difficultyRe:  /難易度：([易中難偏難易]+)/,
+    sourceRe:      /出處：(.+)/,
+    knowledgeRe:   /知識向度：(.+)/,
+    cognitionRe:   null,
+    optionRe:      /\(([A-D])\)\s*([^()<]+?)(?=\([A-D]\)|$|。)/g,
+    fillBlankRe:   /_{4,}/g,
+  },
+  '康軒': {
+    sectionMap: {
+      '是非':           'true_false',
+      '是非題':         'true_false',
+      '選擇':           'single',
+      '選擇題':         'single',
+      '單選題':         'single',
+      '填充':           'fill',
+      '填充題':         'fill',
+    },
+    answerRe:      /《答案》\s*([A-D○╳]|\(\d+\)\d+)/,
+    explanationRe: /詳解：([\s\S]+)/,
+    difficultyRe:  /難易度：([易中難])/,
+    sourceRe:      /【(基|會|習)[^】]*】/,
+    knowledgeRe:   /(?:《知識向度》|章節：)(.+?)(?=學習內容：|$)/,
+    cognitionRe:   /認知層次：(.+)/,
+    optionRe:      /\(([A-D])\)\s*([^()<]+?)(?=\([A-D]\)|$|。)/g,
+    fillBlankRe:   /_{4,}/g,
+  },
+};
+
+function _detectDOCXPublisher(text) {
+  if (!text) return null;
+  const head = text.slice(0, 2000);
+  if (/JMA-\d{4,8}/.test(head))                                  return '南一';
+  if (/《答案》/.test(head))                                       return '康軒';
+  if (/出處：/.test(head) && /認知向度：/.test(head))             return '翰林';
+  // Fallback：用「答案：」配合難易度判斷三家差異
+  if (/答案：/.test(head) && /難易度：/.test(head))               return '翰林';
+  return null;
+}
+
+function _normNum(s) {
+  if (!s) return '';
+  // 全形數字 → 半形
+  let r = String(s).replace(/[０-９]/g, ch => String.fromCharCode(ch.charCodeAt(0) - 0xFEE0));
+  // 中文數字 → 阿拉伯數字
+  const cn = { 一:'1', 二:'2', 三:'3', 四:'4', 五:'5', 六:'6', 七:'7', 八:'8', 九:'9', 十:'10' };
+  r = r.replace(/[一二三四五六七八九十]/g, ch => cn[ch] || ch);
+  return String(parseInt(r, 10) || r);
+}
+
+function _normalizeAnswerCh(ch) {
+  if (!ch) return '';
+  return String(ch)
+    .replace(/[Ａ-Ｄ]/g, c => String.fromCharCode(c.charCodeAt(0) - 0xFEE0))
+    .replace('○', 'A').replace('╳', 'B')
+    .toUpperCase().trim();
+}
+
+function _mapDifficulty(s) {
+  if (!s) return 'medium';
+  if (s.includes('難')) return 'hard';
+  if (s.includes('易')) return 'easy';
+  return 'medium';
+}
+
+function _splitOptionsFromContent(html, optionRe) {
+  // 用 textContent 抓選項位置；innerHTML 保留 <em><sub><sup> 等標籤
+  const tmp = document.createElement('div');
+  tmp.innerHTML = html;
+  const text = tmp.textContent || '';
+  const options = {};
+  let firstOptIdx = -1;
+
+  // 找第一個選項在 text 中的位置
+  const headRe = /[（(]([ＡＢＣＤA-D])[）)]/;
+  const headMatch = text.match(headRe);
+  if (headMatch) firstOptIdx = headMatch.index;
+
+  // 收集所有選項
+  let m;
+  optionRe.lastIndex = 0;
+  while ((m = optionRe.exec(text)) !== null) {
+    const key = _normalizeAnswerCh(m[1]);
+    const val = (m[2] || '').trim().replace(/[。\.]+$/, '').trim();
+    if (key && val) options[key] = val;
+  }
+
+  // content = 第一個選項之前的部分（保留 HTML 結構）
+  let content = html;
+  if (firstOptIdx > 0) {
+    // 用 textContent index 反推 HTML cut point 比較難精確，先用簡單 fallback：
+    // 把整段 text 切到 firstOptIdx，然後在 html 找最接近的位置
+    const headText = text.slice(0, firstOptIdx).trim();
+    if (headText) {
+      // 直接 escape 找替換不可靠；改用 textContent 比較長度逼近
+      const tmp2 = document.createElement('div');
+      tmp2.innerHTML = html;
+      // 走訪 nodes，累計到 firstOptIdx 就 cut
+      let acc = 0;
+      let cutNode = null, cutOffset = 0;
+      const walk = (n) => {
+        if (cutNode) return;
+        if (n.nodeType === 3) { // text node
+          if (acc + n.length >= firstOptIdx) {
+            cutNode = n;
+            cutOffset = firstOptIdx - acc;
+          } else {
+            acc += n.length;
+          }
+        } else {
+          for (const c of [...n.childNodes]) {
+            walk(c);
+            if (cutNode) return;
+          }
+        }
+      };
+      walk(tmp2);
+      if (cutNode) {
+        // 把 cutNode 切開，移除 cutNode 之後的所有節點
+        cutNode.nodeValue = cutNode.nodeValue.slice(0, cutOffset);
+        let n = cutNode;
+        while (n) {
+          let next = null;
+          if (n.nextSibling) {
+            next = n.nextSibling;
+            n.parentNode.removeChild(next);
+            continue;
+          }
+          n = n.parentNode;
+          if (n === tmp2) break;
+          if (n?.nextSibling) {
+            next = n.nextSibling;
+            n.parentNode.removeChild(next);
+          }
+        }
+        content = tmp2.innerHTML;
+      }
+    }
+  }
+
+  return { content: content.trim(), options };
+}
+
+function _parseDOCXQuestions(html, publisher) {
+  const rules = _DOCX_PUBLISHER_RULES[publisher];
+  if (!rules) return { questions: [], errors: ['未支援的出版社：' + publisher] };
+
+  const doc = new DOMParser().parseFromString(html, 'text/html');
+  const errors = [];
+  const questions = [];
+  let currentSection = 'single';
+  let currentQ = null;
+
+  const flush = () => {
+    if (!currentQ) return;
+    // 翰林是非題：sub 拆題
+    if (currentQ.subQuestions?.length && currentQ.subAnswers) {
+      for (const sub of currentQ.subQuestions) {
+        const ansCh = currentQ.subAnswers[sub.num];
+        if (!ansCh) continue;
+        questions.push({
+          publisher:       currentQ.publisher,
+          subject:         currentQ.subject,
+          content:         sub.text,
+          question_type:   'single',
+          options:         { A: '○', B: '╳' },
+          answer:          ansCh === '○' ? 'A' : 'B',
+          explanation:     currentQ.explanation,
+          difficulty:      currentQ.difficulty,
+          knowledge_point: currentQ.knowledge_point,
+        });
+      }
+    } else if (currentQ.content) {
+      // 解析 options（單選題）
+      if (currentQ.question_type === 'single' && Object.keys(currentQ.options).length === 0) {
+        const { content: clean, options } = _splitOptionsFromContent(currentQ.content, rules.optionRe);
+        currentQ.content = clean;
+        currentQ.options = options;
+      }
+      delete currentQ.subQuestions;
+      delete currentQ.subAnswers;
+      questions.push(currentQ);
+    }
+    currentQ = null;
+  };
+
+  for (const node of doc.body.children) {
+    const tag = node.tagName;
+    if (tag === 'OL') {
+      for (const li of node.children) {
+        if (li.tagName !== 'LI') continue;
+        const text = (li.textContent || '').trim();
+        // 章節 marker：短文字 + 在 sectionMap
+        const sectionKey = Object.keys(rules.sectionMap)
+          .sort((a, b) => b.length - a.length)  // 長 key 優先比對
+          .find(k => text === k || text.startsWith(k));
+        if (text.length < 25 && sectionKey) {
+          currentSection = rules.sectionMap[sectionKey];
+          continue;
+        }
+        // 否則：題目開頭
+        flush();
+        // 把 li 內 leading「(   )」之類的引導符號移除（非翰林是非題的話）
+        let contentHtml = (li.innerHTML || '').trim();
+        // 翰林單選題的 「(   ) 」前綴
+        contentHtml = contentHtml.replace(/^\s*[（(]\s*[）)]\s*/, '');
+        // 開頭可能殘留 <a id="..."></a>
+        contentHtml = contentHtml.replace(/^<a[^>]*><\/a>\s*/, '');
+        currentQ = {
+          publisher,
+          subject:         '數學',
+          content:         contentHtml,
+          question_type:   currentSection,
+          options:         {},
+          answer:          '',
+          explanation:     '',
+          difficulty:      'medium',
+          knowledge_point: '',
+          subQuestions:    [],
+          subAnswers:      null,
+        };
+      }
+    } else if (tag === 'P' && currentQ) {
+      const text = (node.textContent || '').trim();
+      if (!text) continue;
+
+      // 答案
+      const ansMatch = text.match(rules.answerRe);
+      if (ansMatch) {
+        // 翰林是非題的多 sub 答案：「(１)○；(２)╳」
+        if (currentQ.subQuestions.length > 0) {
+          const subAns = {};
+          let m;
+          const subAnsRe = /[（(]\s*([０-９0-9一二三四五六七八九十]+)\s*[）)]\s*([○╳])/g;
+          while ((m = subAnsRe.exec(text)) !== null) {
+            subAns[_normNum(m[1])] = m[2];
+          }
+          currentQ.subAnswers = subAns;
+        } else {
+          currentQ.answer = _normalizeAnswerCh(ansMatch[1]);
+        }
+        continue;
+      }
+
+      // 解析/詳解
+      const expMatch = text.match(rules.explanationRe);
+      if (expMatch) { currentQ.explanation = expMatch[1].trim(); continue; }
+      // 難易度
+      const diffMatch = text.match(rules.difficultyRe);
+      if (diffMatch) { currentQ.difficulty = _mapDifficulty(diffMatch[1]); continue; }
+      // 知識向度
+      const knowMatch = text.match(rules.knowledgeRe);
+      if (knowMatch) { currentQ.knowledge_point = (knowMatch[1] || knowMatch[2] || '').trim(); continue; }
+      // 出處 / 認知向度暫時不存
+      if (rules.sourceRe && rules.sourceRe.test(text))         continue;
+      if (rules.cognitionRe && rules.cognitionRe.test(text))   continue;
+
+      // 翰林是非題：sub-question 段落「（　）(N) 內容」
+      if (currentQ.question_type === 'true_false') {
+        const subM = text.match(/^[（(][　 ]*[）)]\s*[（(]\s*([０-９0-9一二三四五六七八九十]+)\s*[）)]\s*(.+)$/);
+        if (subM) {
+          currentQ.subQuestions.push({ num: _normNum(subM[1]), text: subM[2].trim() });
+          continue;
+        }
+      }
+
+      // 否則：併入 content（可能是延續題目或選項在另一行）
+      currentQ.content += '<br>' + (node.innerHTML || '');
+    }
+  }
+  flush();
+
+  return { questions, errors };
+}
+
+function _renderDOCXQuestionPreview(qs) {
+  const $ = id => document.getElementById(id);
+  $('docx-q-count').textContent = qs.length;
+  $('docx-save-count').textContent = qs.length;
+
+  if (!qs.length) {
+    $('docx-cards').innerHTML = `
+      <div style="text-align:center;padding:40px 0;color:var(--text-l)">
+        <i class="fa fa-magnifying-glass" style="font-size:2.2rem;opacity:.3;margin-bottom:12px;display:block"></i>
+        <div>沒有解析到題目</div>
+      </div>`;
+    $('docx-save-btn').disabled = true;
+    return;
+  }
+
+  $('docx-save-btn').disabled = false;
+  $('docx-save-btn').innerHTML = `<i class="fa fa-database"></i> 全部存入題庫（<span id="docx-save-count">${qs.length}</span> 題）`;
+
+  $('docx-cards').innerHTML = qs.map((q, i) => {
+    const tLabel = { single: '單選', fill: '填充', true_false: '是非' }[q.question_type] || '單選';
+    const badgeCls = q.question_type === 'fill' ? 'gas-badge-tf' : 'gas-badge-mc';
+    const badge = `<span class="gas-badge ${badgeCls}">${tLabel}</span>`;
+    const dLabel = { easy: '易', medium: '中', hard: '難' }[q.difficulty] || '中';
+    const diffBadge = `<span class="gas-badge gas-badge-sc">${dLabel}</span>`;
+    const knowBadge = q.knowledge_point
+      ? `<span class="gas-badge" style="background:rgba(99,102,241,.08);color:var(--indigo);font-size:.65rem">${gasEscHtml(q.knowledge_point.slice(0, 24))}</span>`
+      : '';
+
+    let body;
+    if (q.question_type === 'fill') {
+      body = `<div class="gas-opts"><div class="gas-opt ok">答案：${gasEscHtml(q.answer || '?')} ✓</div></div>`;
+    } else {
+      const optHtml = Object.keys(q.options).map(k =>
+        `<div class="gas-opt${k === q.answer ? ' ok' : ''}">${k}. ${gasEscHtml(q.options[k] || '')}${k === q.answer ? ' ✓' : ''}</div>`
+      ).join('');
+      body = `<div class="gas-opts">${optHtml || '<div style="color:var(--rose);font-size:.78rem">⚠ 未解析到選項</div>'}</div>`;
+    }
+
+    return `
+      <div class="gas-q-card" id="docx-card-${i}">
+        <div class="gas-q-card-hdr">
+          <span style="font-size:.75rem;font-weight:700;color:var(--indigo)">第 ${i+1} 題</span>
+          ${badge}${diffBadge}${knowBadge}
+          <button class="gas-q-card-del" onclick="deleteDOCXQ(${i})" title="移除此題">
+            <i class="fa fa-xmark"></i>
+          </button>
+        </div>
+        <div class="gas-q-text">${q.content || '<em>(空)</em>'}</div>
+        ${body}
+      </div>`;
+  }).join('');
 }
 
 /* ── C4 / C7 共用：EMF/WMF → PNG dataURL（emf-converter from jsdelivr CDN）──
