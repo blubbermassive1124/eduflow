@@ -963,12 +963,13 @@ a { color: var(--indigo); }
   margin: 0 2px;
 }
 .docx-html-preview .formula-rendered {
-  background: rgba(255,255,255,.55);
-  border: 1px solid rgba(99,102,241,.15);
-  padding: 2px 4px; border-radius: 3px;
+  /* 行內公式跟著文字流走，不要撐高整行 */
+  max-height: 1.8em !important;
+  width: auto;
   vertical-align: middle;
-  /* 強制公式去飽和 + 反白，避免康軒類綠色字干擾閱讀 */
-  filter: grayscale(1) contrast(1.4);
+  background: transparent;
+  /* 只去飽和、不加 contrast；contrast 會把白背景壓成灰 */
+  filter: grayscale(1);
 }
 .gas-q-card {
   background:var(--surface); border:1px solid var(--border);
