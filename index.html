@@ -9701,28 +9701,43 @@ function _mapDifficulty(s) {
   return 'medium';
 }
 
-function _splitOptionsFromContent(html, optionRe) {
+function _splitOptionsFromContent(html) {
   // 用 textContent 抓選項位置；innerHTML 保留 <em><sub><sup> 等標籤
   const tmp = document.createElement('div');
   tmp.innerHTML = html;
   const text = tmp.textContent || '';
-  const options = {};
-  let firstOptIdx = -1;
 
-  // 找第一個選項在 text 中的位置
-  const headRe = /[（(]([ＡＢＣＤA-D])[）)]/;
-  const headMatch = text.match(headRe);
-  if (headMatch) firstOptIdx = headMatch.index;
-
-  // 收集所有選項
+  // 找所有 (A-D) 標記位置；用順序遞增過濾掉「題目中含 (A) 假陽性」與選項內容含括號（例 (－2)）
+  const markRe = /[（(]([ＡＢＣＤA-D])[）)]/g;
+  const allMarks = [];
   let m;
-  optionRe.lastIndex = 0;
-  while ((m = optionRe.exec(text)) !== null) {
-    const key = _normalizeAnswerCh(m[1]);
-    const val = (m[2] || '').trim().replace(/[。\.]+$/, '').trim();
-    // 即使 val 為空也保留 — 表示這選項內容可能是圖片（C6 處理）
-    if (key) options[key] = val || '(圖片或空白)';
+  while ((m = markRe.exec(text)) !== null) {
+    allMarks.push({ idx: m.index, end: m.index + m[0].length, key: _normalizeAnswerCh(m[1]) });
   }
+  // 過濾：第一個必須是 A，後續每個 key 必須等於前一個 +1
+  const marks = [];
+  for (const p of allMarks) {
+    if (marks.length === 0) {
+      if (p.key === 'A') marks.push(p);
+    } else {
+      const expected = String.fromCharCode(marks[marks.length-1].key.charCodeAt(0) + 1);
+      if (p.key === expected) marks.push(p);
+    }
+  }
+
+  if (marks.length === 0) {
+    return { content: html.trim(), options: {} };
+  }
+
+  // 用相鄰位置切片，不依賴括號邊界 → 選項內容即使含 (...) 也能正確切
+  const options = {};
+  for (let i = 0; i < marks.length; i++) {
+    const startPos = marks[i].end;
+    const endPos   = (i + 1 < marks.length) ? marks[i + 1].idx : text.length;
+    const val = text.slice(startPos, endPos).trim().replace(/[。\.]+$/, '').trim();
+    options[marks[i].key] = val || '(圖片或空白)';
+  }
+  const firstOptIdx = marks[0].idx;
 
   // content = 第一個選項之前的部分（保留 HTML 結構）
   let content = html;
@@ -9812,9 +9827,16 @@ function _parseDOCXQuestions(html, publisher) {
     } else if (currentQ.content) {
       // 解析 options（單選題）
       if (currentQ.question_type === 'single' && Object.keys(currentQ.options).length === 0) {
-        const { content: clean, options } = _splitOptionsFromContent(currentQ.content, rules.optionRe);
+        const { content: clean, options } = _splitOptionsFromContent(currentQ.content);
         currentQ.content = clean;
         currentQ.options = options;
+      }
+      // 是非題（康軒類單題、無 sub 結構）→ 自動補 ○╳ 兩選項
+      if (currentQ.question_type === 'true_false' && Object.keys(currentQ.options).length === 0) {
+        // 把題目開頭的「(　　)」引導符號去掉
+        currentQ.content = currentQ.content.replace(/^\s*[（(][　 \s]*[）)]\s*/, '');
+        currentQ.options = { A: '○', B: '╳' };
+        // 把 question_type 留 true_false，存入 supabase 時轉 single（saveDOCXQuestions 已處理）
       }
       delete currentQ.subQuestions;
       delete currentQ.subAnswers;
