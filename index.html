@@ -9715,6 +9715,62 @@ function _mapDifficulty(s) {
   return 'medium';
 }
 
+function _domSliceHtmlByText(html, startIdx, endIdx) {
+  // 用 Range API 從 html 取對應 textContent[startIdx..endIdx] 的 innerHTML（保留 inline tags、img、span chip）
+  const tmp = document.createElement('div');
+  tmp.innerHTML = html;
+  const full = tmp.textContent || '';
+  if (startIdx >= full.length || startIdx >= endIdx) return '';
+  if (endIdx > full.length) endIdx = full.length;
+
+  let acc = 0;
+  let startNode = null, startOffset = 0;
+  let endNode = null, endOffset = 0;
+
+  const walk = (n) => {
+    if (startNode && endNode) return;
+    if (n.nodeType === 3) { // text node
+      const len = n.length;
+      if (!startNode && acc + len >= startIdx) {
+        startNode = n; startOffset = startIdx - acc;
+      }
+      if (!endNode && acc + len >= endIdx) {
+        endNode = n; endOffset = endIdx - acc;
+      }
+      acc += len;
+    } else {
+      for (const c of [...n.childNodes]) {
+        walk(c);
+        if (startNode && endNode) return;
+      }
+    }
+  };
+  walk(tmp);
+  if (!startNode) return '';
+  if (!endNode) { endNode = startNode; endOffset = startNode.length; }
+
+  const range = document.createRange();
+  range.setStart(startNode, startOffset);
+  range.setEnd(endNode, endOffset);
+  const div = document.createElement('div');
+  div.appendChild(range.cloneContents());
+  return div.innerHTML;
+}
+
+function _stripImgFromHtml(html) {
+  // 把 <img> 換成「(圖片)」placeholder（避免 base64 PNG 撐爆 options/explanation 欄位）
+  // <span class="formula-fallback"> chip 保留，因為輕量
+  const tmp = document.createElement('div');
+  tmp.innerHTML = html;
+  tmp.querySelectorAll('img').forEach(img => {
+    const ph = document.createElement('span');
+    ph.style.cssText = 'color:var(--text-l);font-style:italic';
+    ph.textContent = '(圖片)';
+    img.replaceWith(ph);
+  });
+  return tmp.innerHTML;
+}
+
 function _extractFirstImageFromContent(html) {
   // C6：把 content 內第一張 PNG/JPEG 抽出來作為題目附圖（image_data），從 content 移除避免重複顯示
   const tmp = document.createElement('div');
@@ -9761,13 +9817,16 @@ function _splitOptionsFromContent(html) {
     return { content: html.trim(), options: {} };
   }
 
-  // 用相鄰位置切片，不依賴括號邊界 → 選項內容即使含 (...) 也能正確切
+  // 用相鄰位置切片，DOM Range 拿 HTML（保留 chip / img placeholder），不只 textContent
   const options = {};
   for (let i = 0; i < marks.length; i++) {
     const startPos = marks[i].end;
     const endPos   = (i + 1 < marks.length) ? marks[i + 1].idx : text.length;
-    const val = text.slice(startPos, endPos).trim().replace(/[。\.]+$/, '').trim();
-    options[marks[i].key] = val || '(圖片或空白)';
+    let valHtml = _domSliceHtmlByText(html, startPos, endPos);
+    valHtml = _stripImgFromHtml(valHtml).trim();
+    // 去掉前後標點殘渣
+    valHtml = valHtml.replace(/^[\s　]+/, '').replace(/[\s　]+$/, '').replace(/[。\.]+$/, '').trim();
+    options[marks[i].key] = valHtml || '(圖片或空白)';
   }
   const firstOptIdx = marks[0].idx;
 
@@ -9973,9 +10032,21 @@ function _parseDOCXQuestions(html, publisher) {
         continue;
       }
 
-      // 解析/詳解
+      // 解析/詳解（保留 inline HTML：含 chip + img placeholder）
       const expMatch = text.match(rules.explanationRe);
-      if (expMatch) { currentQ.explanation = expMatch[1].trim(); continue; }
+      if (expMatch) {
+        const fullText = node.textContent || '';
+        const prefixM = fullText.match(/(?:解析|詳解)[：:]/);
+        if (prefixM) {
+          const startIdx = prefixM.index + prefixM[0].length;
+          let html = _domSliceHtmlByText(node.innerHTML, startIdx, fullText.length);
+          html = _stripImgFromHtml(html).trim();
+          currentQ.explanation = html;
+        } else {
+          currentQ.explanation = expMatch[1].trim();
+        }
+        continue;
+      }
       // 難易度
       const diffMatch = text.match(rules.difficultyRe);
       if (diffMatch) { currentQ.difficulty = _mapDifficulty(diffMatch[1]); continue; }
@@ -10036,8 +10107,9 @@ function _renderDOCXQuestionPreview(qs) {
     if (q.question_type === 'fill') {
       body = `<div class="gas-opts"><div class="gas-opt ok">答案：${gasEscHtml(q.answer || '?')} ✓</div></div>`;
     } else {
+      // options[k] 是 HTML（含 chip / img placeholder），直接 render，不 escape
       const optHtml = Object.keys(q.options).map(k =>
-        `<div class="gas-opt${k === q.answer ? ' ok' : ''}">${k}. ${gasEscHtml(q.options[k] || '')}${k === q.answer ? ' ✓' : ''}</div>`
+        `<div class="gas-opt${k === q.answer ? ' ok' : ''}">${k}. ${q.options[k] || ''}${k === q.answer ? ' ✓' : ''}</div>`
       ).join('');
       body = `<div class="gas-opts">${optHtml || '<div style="color:var(--rose);font-size:.78rem">⚠ 未解析到選項</div>'}</div>`;
     }
