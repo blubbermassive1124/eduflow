@@ -9701,6 +9701,24 @@ function _mapDifficulty(s) {
   return 'medium';
 }
 
+function _extractFirstImageFromContent(html) {
+  // C6：把 content 內第一張 PNG/JPEG 抽出來作為題目附圖（image_data），從 content 移除避免重複顯示
+  const tmp = document.createElement('div');
+  tmp.innerHTML = html;
+  const imgs = [...tmp.querySelectorAll('img')];
+  let imageData = null;
+  for (const img of imgs) {
+    const src = img.getAttribute('src') || '';
+    // 公式 chip 已是 span 不在這裡；其餘 src 為空的 img 是 fallback 殘留，跳過
+    if (src.startsWith('data:image/png') || src.startsWith('data:image/jpeg') || src.startsWith('data:image/jpg')) {
+      imageData = src;
+      img.remove();
+      break;
+    }
+  }
+  return { content: tmp.innerHTML, imageData };
+}
+
 function _splitOptionsFromContent(html) {
   // 用 textContent 抓選項位置；innerHTML 保留 <em><sub><sup> 等標籤
   const tmp = document.createElement('div');
@@ -9825,6 +9843,12 @@ function _parseDOCXQuestions(html, publisher) {
         });
       }
     } else if (currentQ.content) {
+      // C6：抽第一張真實圖（PNG/JPEG）→ image_data
+      const { content: htmlAfterImg, imageData } = _extractFirstImageFromContent(currentQ.content);
+      if (imageData) {
+        currentQ.content = htmlAfterImg;
+        currentQ.image_data = imageData;
+      }
       // 解析 options（單選題）
       if (currentQ.question_type === 'single' && Object.keys(currentQ.options).length === 0) {
         const { content: clean, options } = _splitOptionsFromContent(currentQ.content);
@@ -9881,9 +9905,19 @@ function _parseDOCXQuestions(html, publisher) {
           subAnswers:      null,
         };
       }
+    } else if (tag === 'IMG' && currentQ) {
+      // mammoth 偶爾把 <img> 直接放在 body 子層級（不在 ol/p 內），附到當前題的 content
+      currentQ.content += node.outerHTML;
+      continue;
     } else if (tag === 'P') {
       const text = (node.textContent || '').trim();
-      if (!text) continue;
+      if (!text) {
+        // 空文字段落但可能是純圖片 <p><img></p>，仍要併入 content
+        if (currentQ && node.querySelector('img')) {
+          currentQ.content += node.innerHTML;
+        }
+        continue;
+      }
 
       // 章節 marker 也可能藏在 <p><strong>...</strong></p>（南一/康軒格式）
       const strong = node.querySelector('strong');
@@ -9994,16 +10028,22 @@ function _renderDOCXQuestionPreview(qs) {
       body = `<div class="gas-opts">${optHtml || '<div style="color:var(--rose);font-size:.78rem">⚠ 未解析到選項</div>'}</div>`;
     }
 
+    const imgPreview = q.image_data
+      ? `<img src="${q.image_data}" style="display:block;max-width:100%;max-height:140px;margin:8px auto;border-radius:4px;border:1px solid var(--border);object-fit:contain">`
+      : '';
+
     return `
       <div class="gas-q-card" id="docx-card-${i}">
         <div class="gas-q-card-hdr">
           <span style="font-size:.75rem;font-weight:700;color:var(--indigo)">第 ${i+1} 題</span>
           ${badge}${diffBadge}${knowBadge}
+          ${q.image_data ? '<span class="gas-badge gas-badge-img"><i class="fa fa-image"></i> 含圖</span>' : ''}
           <button class="gas-q-card-del" onclick="deleteDOCXQ(${i})" title="移除此題">
             <i class="fa fa-xmark"></i>
           </button>
         </div>
         <div class="gas-q-text">${q.content || '<em>(空)</em>'}</div>
+        ${imgPreview}
         ${body}
       </div>`;
   }).join('');
