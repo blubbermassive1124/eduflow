@@ -9545,6 +9545,20 @@ async function parseDOCXFile() {
     document.getElementById('docx-step-upload').style.display  = 'none';
     document.getElementById('docx-step-preview').style.display = 'block';
 
+    // C6.5：對含「如圖/附圖」的題，把第一個公式 chip 用 emf-converter 渲染為 image_data
+    if (fbCount > 0) {
+      btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> 補強題目附圖...';
+      try {
+        const enriched = await _enrichDOCXFigures(questions);
+        if (enriched > 0) {
+          toast(`✅ 補強 ${enriched} 張題目附圖（從 EMF/WMF 渲染）`, 'ok');
+          _renderDOCXQuestionPreview(questions);
+        }
+      } catch (e) {
+        console.warn('附圖補強失敗:', e);
+      }
+    }
+
     btn.disabled  = false;
     btn.innerHTML = '<i class="fa fa-check"></i> 解析完成';
   } catch (e) {
@@ -10047,6 +10061,63 @@ function _renderDOCXQuestionPreview(qs) {
         ${body}
       </div>`;
   }).join('');
+}
+
+/* ── C6.5：對含「如圖/附圖」的題，把第一個公式 chip 用 emf-converter 渲染為 image_data ──
+   理由：康軒/南一/翰林習慣用 Word Equation 工具畫幾何圖，被當成 WMF/EMF 儲存。
+   emf-converter 對「幾何圖」渲染還算可接受（雖然字級可能錯），對複雜公式才會嚴重失真。
+   靠「如圖」keyword 過濾，剛好挑出幾何圖的 case，避開行內公式。 */
+async function _enrichDOCXFigures(questions) {
+  const figureKw = /如(?:附|下|右|左|上)?圖|附圖|如圖所?示|下圖/;
+  let enriched = 0;
+  let converterLoaded = false;
+  let convertEmfToDataUrl, convertWmfToDataUrl;
+
+  for (const q of questions) {
+    if (q.image_data) continue;                // 已有 PNG/JPEG，跳過
+    if (!figureKw.test(q.content || ''))        continue;
+
+    const tmp = document.createElement('div');
+    tmp.innerHTML = q.content;
+    const firstChip = tmp.querySelector('span.formula-fallback');
+    if (!firstChip) continue;
+
+    const m = (firstChip.textContent || '').match(/#(\d+)/);
+    if (!m) continue;
+    const fbId = m[1];
+    const fbBase64 = _docxData.fallbacks?.[fbId];
+    if (!fbBase64) continue;
+
+    if (!converterLoaded) {
+      const mod = await _loadEmfConverter();
+      convertEmfToDataUrl = mod.convertEmfToDataUrl;
+      convertWmfToDataUrl = mod.convertWmfToDataUrl;
+      converterLoaded = true;
+    }
+
+    try {
+      const buf  = Uint8Array.from(atob(fbBase64), c => c.charCodeAt(0)).buffer;
+      const view = new Uint8Array(buf);
+      const isEmf = view[0] === 0x01 && view[1] === 0x00 && view[2] === 0x00 && view[3] === 0x00;
+      let url = isEmf
+        ? await convertEmfToDataUrl(buf, 800, 600)
+        : await convertWmfToDataUrl(buf, 800, 600);
+      if (!url) {
+        url = isEmf
+          ? await convertWmfToDataUrl(buf, 800, 600)
+          : await convertEmfToDataUrl(buf, 800, 600);
+      }
+      if (url) {
+        q.image_data = url;
+        firstChip.remove();
+        q.content = tmp.innerHTML;
+        enriched++;
+      }
+    } catch (e) {
+      console.warn(`enrichFigure for #${fbId} failed:`, e);
+    }
+  }
+  return enriched;
 }
 
 /* ── C4 / C7 共用：EMF/WMF → PNG dataURL（emf-converter from jsdelivr CDN）──
