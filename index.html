@@ -9754,11 +9754,15 @@ async function handleDocxUpload(input) {
   // ── 接受 ──
   _docxData.file = file;
   const $ = id => document.getElementById(id);
-  $('docx-file-name').textContent = file.name;
-  $('docx-file-size').textContent = `(${(file.size/1024).toFixed(1)} KB)`;
-  $('docx-file-info').style.display = 'block';
-  $('docx-parse-btn').disabled = false;
-  $('docx-parse-btn').innerHTML = '<i class="fa fa-magnifying-glass"></i> 解析 DOCX';
+  const setT = (id, v) => { const e = $(id); if (e) e.textContent = v; };
+  setT('docx-file-name', file.name);
+  setT('docx-file-size', `(${(file.size/1024).toFixed(1)} KB)`);
+  const fInfo = $('docx-file-info'); if (fInfo) fInfo.style.display = 'block';
+  const pBtn  = $('docx-parse-btn');
+  if (pBtn) {
+    pBtn.disabled  = false;
+    pBtn.innerHTML = '<i class="fa fa-magnifying-glass"></i> 解析 DOCX';
+  }
   toast(`✅ 已收到 ${file.name}`, 'ok');
 }
 
@@ -9828,7 +9832,9 @@ async function parseDOCXFile() {
       return;
     }
 
-    document.getElementById('docx-detected-publisher').textContent = publisher;
+    const _safeSetText = (id, v) => { const e = document.getElementById(id); if (e) e.textContent = v; else console.warn('Missing #' + id); };
+    const _safeSetDisp = (id, v) => { const e = document.getElementById(id); if (e) e.style.display = v; else console.warn('Missing #' + id); };
+    _safeSetText('docx-detected-publisher', publisher);
 
     const { questions, errors } = _parseDOCXQuestions(_docxData.html, publisher);
     _docxData.questions = questions;
@@ -9842,8 +9848,8 @@ async function parseDOCXFile() {
     );
 
     _renderDOCXQuestionPreview(questions);
-    document.getElementById('docx-step-upload').style.display  = 'none';
-    document.getElementById('docx-step-preview').style.display = 'block';
+    _safeSetDisp('docx-step-upload', 'none');
+    _safeSetDisp('docx-step-preview', 'block');
 
     // C6.5：對含「如圖/附圖」的題，把第一個公式 chip 用 emf-converter 渲染為 image_data
     if (fbCount > 0) {
@@ -9862,8 +9868,10 @@ async function parseDOCXFile() {
     btn.disabled  = false;
     btn.innerHTML = '<i class="fa fa-check"></i> 解析完成';
   } catch (e) {
-    console.error('docx-extract err:', e);
-    toast(`解析失敗：${e.message}`, 'er');
+    console.error('docx-extract err:', e, e.stack);
+    // 顯示更具體錯誤位置（stack 第一行通常含 line:col）
+    const where = (e.stack || '').split('\n').find(l => /\.html:\d/.test(l)) || '';
+    toast(`解析失敗：${e.message}${where ? '（' + where.trim().slice(0, 80) + '）' : ''}`, 'er');
     btn.disabled  = false;
     btn.innerHTML = '<i class="fa fa-magnifying-glass"></i> 解析 DOCX';
   }
@@ -10418,21 +10426,26 @@ function _parseDOCXQuestions(html, publisher) {
 
 function _renderDOCXQuestionPreview(qs) {
   const $ = id => document.getElementById(id);
-  $('docx-q-count').textContent = qs.length;
-  $('docx-save-count').textContent = qs.length;
+  const setT = (id, v) => { const e = $(id); if (e) e.textContent = v; };
+  const setH = (id, v) => { const e = $(id); if (e) e.innerHTML = v; };
+  setT('docx-q-count',    qs.length);
+  setT('docx-save-count', qs.length);
 
   if (!qs.length) {
-    $('docx-cards').innerHTML = `
+    setH('docx-cards', `
       <div style="text-align:center;padding:40px 0;color:var(--text-l)">
         <i class="fa fa-magnifying-glass" style="font-size:2.2rem;opacity:.3;margin-bottom:12px;display:block"></i>
         <div>沒有解析到題目</div>
-      </div>`;
-    $('docx-save-btn').disabled = true;
+      </div>`);
+    const sb = $('docx-save-btn'); if (sb) sb.disabled = true;
     return;
   }
 
-  $('docx-save-btn').disabled = false;
-  $('docx-save-btn').innerHTML = `<i class="fa fa-database"></i> 全部存入題庫（<span id="docx-save-count">${qs.length}</span> 題）`;
+  const sBtn = $('docx-save-btn');
+  if (sBtn) {
+    sBtn.disabled  = false;
+    sBtn.innerHTML = `<i class="fa fa-database"></i> 全部存入題庫（<span id="docx-save-count">${qs.length}</span> 題）`;
+  }
 
   $('docx-cards').innerHTML = qs.map((q, i) => {
     const tLabel = { single: '單選', fill: '填充', true_false: '是非' }[q.question_type] || '單選';
