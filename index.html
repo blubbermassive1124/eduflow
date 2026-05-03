@@ -9534,11 +9534,12 @@ async function parseDOCXFile() {
     const { questions, errors } = _parseDOCXQuestions(_docxData.html, publisher);
     _docxData.questions = questions;
 
+    const incompleteCount = questions.filter(q => _detectIncompleteQuestion(q).length > 0).length;
     toast(
-      errors.length
-        ? `解析完成：${questions.length} 題（${errors.length} 處警告，${fbCount} 個公式 chip）`
+      incompleteCount > 0
+        ? `✅ 解析完成：${publisher} ${questions.length} 題（⚠ ${incompleteCount} 題可能不完整，請檢查紅色邊框卡片）`
         : `✅ 解析完成：${publisher} ${questions.length} 題${fbCount?`，${fbCount} 個公式 chip` : ''}`,
-      errors.length ? 'in' : 'ok'
+      incompleteCount > 0 ? 'in' : 'ok'
     );
 
     _renderDOCXQuestionPreview(questions);
@@ -9619,6 +9620,42 @@ async function saveDOCXQuestions() {
 function deleteDOCXQ(i) {
   _docxData.questions.splice(i, 1);
   _renderDOCXQuestionPreview(_docxData.questions);
+}
+
+/* ── C6.6：偵測「內容可能不完整」的題目（mammoth 對某類 OLE 抽不出 chip 時用） ── */
+function _detectIncompleteQuestion(q) {
+  const reasons = [];
+  const tmp = document.createElement('div');
+  tmp.innerHTML = q.content || '';
+  const contentText = (tmp.textContent || '').trim();
+
+  // 1. 算符前後缺主詞（譬如「，＝20」「⊥。」）
+  if (/[，。；？！\s　][＝⊥][，。；？！\s　]/.test(contentText)) reasons.push('算符前後缺內容');
+  if (/^[＝⊥]/.test(contentText) || /[＝⊥]$/.test(contentText)) reasons.push('題幹開頭/結尾算符');
+
+  // 2. 幾何 keyword 但無線段/chip
+  const hasGeoKw = /(平分|中垂線|角平分線|垂直)/.test(contentText);
+  const hasChip = (q.content || '').includes('formula-fallback');
+  const hasImg  = !!q.image_data;
+  const hasSegmentLetters = /[A-Z]{2,}/.test(contentText); // AB, CD 大寫字母對
+  if (hasGeoKw && !hasChip && !hasImg && !hasSegmentLetters) reasons.push('幾何題缺線段標記');
+
+  // 3. 選項異常：全部是純數字且過短，或多個選項相同
+  if (q.question_type === 'single' && q.options) {
+    const vals = Object.values(q.options)
+      .map(v => (v || '').replace(/<[^>]+>/g, '').trim())
+      .filter(v => v && v !== '(圖片或空白)');
+    if (vals.length >= 3) {
+      const uniq = new Set(vals);
+      if (uniq.size === 1) reasons.push('所有選項相同');
+      else if (vals.every(v => /^\d+(\.\d+)?$/.test(v) && v.length <= 3)) reasons.push('選項過短可能缺公式');
+    }
+  }
+
+  // 4. 答案空
+  if (q.question_type !== 'fill' && !q.answer) reasons.push('未抓到答案');
+
+  return reasons;
 }
 
 /* ── C5：publisher 偵測 + 切題 ── */
@@ -10118,12 +10155,19 @@ function _renderDOCXQuestionPreview(qs) {
       ? `<img src="${q.image_data}" style="display:block;max-width:100%;max-height:140px;margin:8px auto;border-radius:4px;border:1px solid var(--border);object-fit:contain">`
       : '';
 
+    const reasons = _detectIncompleteQuestion(q);
+    const warnBadge = reasons.length
+      ? `<span class="gas-badge" style="background:rgba(244,63,94,.12);color:var(--rose);font-size:.65rem;border:1px solid rgba(244,63,94,.25)" title="${gasEscHtml(reasons.join('；'))}">⚠ 內容可能不完整</span>`
+      : '';
+    const cardStyle = reasons.length ? 'border-left:3px solid var(--rose);background:rgba(244,63,94,.02)' : '';
+
     return `
-      <div class="gas-q-card" id="docx-card-${i}">
+      <div class="gas-q-card" id="docx-card-${i}" style="${cardStyle}">
         <div class="gas-q-card-hdr">
           <span style="font-size:.75rem;font-weight:700;color:var(--indigo)">第 ${i+1} 題</span>
           ${badge}${diffBadge}${knowBadge}
           ${q.image_data ? '<span class="gas-badge gas-badge-img"><i class="fa fa-image"></i> 含圖</span>' : ''}
+          ${warnBadge}
           <button class="gas-q-card-del" onclick="deleteDOCXQ(${i})" title="移除此題">
             <i class="fa fa-xmark"></i>
           </button>
