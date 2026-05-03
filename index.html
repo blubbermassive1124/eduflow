@@ -3143,7 +3143,7 @@ a { color: var(--indigo); }
 
 <!-- ═══════════════ DOCX 匯入 Modal ═══════════════ -->
 <div id="docx-import-modal" class="modal-ov">
-<div class="modal-box" style="max-width:760px;max-height:90vh;overflow-y:auto">
+<div class="modal-box" style="max-width:1280px;width:96vw;max-height:96vh;overflow-y:auto">
   <div class="modal-hdr">
     <div class="modal-title"><i class="fa fa-file-word" style="color:var(--indigo)"></i> DOCX 試卷匯入（翰林 / 南一 / 康軒）</div>
     <button class="btn btn-g btn-ico" onclick="closeDOCXImportModal()"><i class="fa fa-xmark"></i></button>
@@ -3188,20 +3188,172 @@ a { color: var(--indigo); }
     </button>
   </div>
 
-  <!-- Step 2: Preview (待 C5 實作) -->
+  <!-- Step 2: Preview / 編輯（左半編輯，右半原文滾動） -->
   <div id="docx-step-preview" style="display:none">
-    <div class="fx ai-c jb mb3">
-      <div>
-        <div style="font-size:.9rem;font-weight:600;color:var(--text)">解析結果預覽</div>
-        <div style="font-size:.78rem;color:var(--text-l)">
-          共 <strong id="docx-q-count" style="color:var(--indigo)">0</strong> 題，確認後存入題庫
+    <!-- Header：題目選擇 + 摘要 + 重新上傳 -->
+    <div class="fx ai-c jb mb3" style="flex-wrap:wrap;gap:8px">
+      <div style="font-size:.86rem;color:var(--text)">
+        <span id="dpre-publisher-tag" class="chip ci">—</span>
+        共 <strong id="docx-q-count" style="color:var(--indigo)">0</strong> 題
+        <span style="font-size:.74rem;color:var(--text-l);margin-left:6px" id="dpre-incomplete-summary"></span>
+      </div>
+      <div class="fx ai-c g2x" style="gap:6px">
+        <button class="btn btn-g btn-sm" onclick="dprePrev()" title="上一題" style="padding:5px 10px"><i class="fa fa-chevron-left"></i></button>
+        <select class="inp" id="dpre-q-selector" onchange="dpreSelectQuestion(parseInt(this.value, 10))" style="width:160px;padding:5px 8px;font-size:.82rem"></select>
+        <button class="btn btn-g btn-sm" onclick="dpreNext()" title="下一題" style="padding:5px 10px"><i class="fa fa-chevron-right"></i></button>
+        <button class="btn btn-r btn-sm" onclick="dpreDeleteCurrent()" title="移除此題" style="padding:5px 10px"><i class="fa fa-trash"></i></button>
+        <button class="btn btn-g btn-sm" onclick="docxBackToUpload()" style="padding:5px 10px"><i class="fa fa-arrow-left"></i> 重新上傳</button>
+      </div>
+    </div>
+
+    <!-- Split body：左半編輯，右半原文 -->
+    <div style="display:flex;gap:14px;height:calc(96vh - 220px);min-height:480px">
+      <!-- LEFT: edit pane -->
+      <div style="flex:1;overflow-y:auto;padding-right:8px;min-width:480px">
+        <div id="dpre-incomplete-tag-wrap" style="margin-bottom:8px"></div>
+
+        <div class="latex-palette" style="display:flex;flex-wrap:wrap;gap:3px;margin-bottom:8px;padding:8px;background:var(--accent-soft);border-radius:var(--r-md);border:1px solid var(--border)">
+          <span style="font-size:.7rem;color:var(--text-l);align-self:center;margin-right:4px">數學符號 →</span>
+          <button type="button" class="btn btn-g btn-sm" onclick="insertLatexBy('frac')"     title="分數"          style="padding:2px 7px;font-size:.78rem">⅔</button>
+          <button type="button" class="btn btn-g btn-sm" onclick="insertLatexBy('sqrt')"     title="根號"          style="padding:2px 7px;font-size:.78rem">√</button>
+          <button type="button" class="btn btn-g btn-sm" onclick="insertLatexBy('pow')"      title="次方"          style="padding:2px 7px;font-size:.78rem">x²</button>
+          <button type="button" class="btn btn-g btn-sm" onclick="insertLatexBy('sub')"      title="下標"          style="padding:2px 7px;font-size:.78rem">x₁</button>
+          <button type="button" class="btn btn-g btn-sm" onclick="insertLatexBy('abs')"      title="絕對值"        style="padding:2px 7px;font-size:.78rem">|x|</button>
+          <button type="button" class="btn btn-g btn-sm" onclick="insertLatexBy('leq')"      title="≦"             style="padding:2px 7px;font-size:.78rem">≦</button>
+          <button type="button" class="btn btn-g btn-sm" onclick="insertLatexBy('geq')"      title="≧"             style="padding:2px 7px;font-size:.78rem">≧</button>
+          <button type="button" class="btn btn-g btn-sm" onclick="insertLatexBy('neq')"      title="≠"             style="padding:2px 7px;font-size:.78rem">≠</button>
+          <button type="button" class="btn btn-g btn-sm" onclick="insertLatexBy('perp')"     title="⊥"             style="padding:2px 7px;font-size:.78rem">⊥</button>
+          <button type="button" class="btn btn-g btn-sm" onclick="insertLatexBy('para')"     title="∥"             style="padding:2px 7px;font-size:.78rem">∥</button>
+          <button type="button" class="btn btn-g btn-sm" onclick="insertLatexBy('cong')"     title="≅"             style="padding:2px 7px;font-size:.78rem">≅</button>
+          <button type="button" class="btn btn-g btn-sm" onclick="insertLatexBy('sim')"      title="∽"             style="padding:2px 7px;font-size:.78rem">∽</button>
+          <button type="button" class="btn btn-g btn-sm" onclick="insertLatexBy('angle')"    title="∠"             style="padding:2px 7px;font-size:.78rem">∠</button>
+          <button type="button" class="btn btn-g btn-sm" onclick="insertLatexBy('triangle')" title="△"             style="padding:2px 7px;font-size:.78rem">△</button>
+          <button type="button" class="btn btn-g btn-sm" onclick="insertLatexBy('overline')" title="線段（上劃線）" style="padding:2px 7px;font-size:.78rem">‾AB</button>
+          <button type="button" class="btn btn-g btn-sm" onclick="insertLatexBy('vec')"      title="向量"          style="padding:2px 7px;font-size:.78rem">→AB</button>
+          <button type="button" class="btn btn-g btn-sm" onclick="insertLatexBy('block')"    title="包公式區塊"     style="padding:2px 7px;font-size:.78rem">$ $</button>
+        </div>
+
+        <div class="g2 mb3" style="gap:8px">
+          <div class="iw" style="margin:0"><label class="lbl">出版社</label><input class="inp" id="dpre-publisher" oninput="dpreMarkDirty()"/></div>
+          <div class="iw" style="margin:0"><label class="lbl">科目</label><input class="inp" id="dpre-subject" value="數學" oninput="dpreMarkDirty()"/></div>
+        </div>
+        <div class="g2 mb3" style="gap:8px">
+          <div class="iw" style="margin:0"><label class="lbl">知識點</label><input class="inp" id="dpre-unit" oninput="dpreMarkDirty()"/></div>
+          <div class="iw" style="margin:0"><label class="lbl">難度</label>
+            <select class="inp" id="dpre-diff" oninput="dpreMarkDirty()">
+              <option value="easy">易</option><option value="medium">中</option><option value="hard">難</option>
+            </select></div>
+        </div>
+        <div class="g2 mb3" style="gap:8px">
+          <div class="iw" style="margin:0"><label class="lbl">題型</label>
+            <select class="inp" id="dpre-question-type" oninput="dpreMarkDirty()">
+              <option value="single">單選</option><option value="fill">填充</option><option value="group">題組</option>
+            </select></div>
+          <div class="iw" style="margin:0"><label class="lbl">正確答案</label>
+            <select class="inp" id="dpre-answer" oninput="dpreMarkDirty()">
+              <option value="A">A</option><option value="B">B</option>
+              <option value="C">C</option><option value="D">D</option>
+            </select></div>
+        </div>
+
+        <div class="iw mb3">
+          <label class="lbl">題目內容</label>
+          <textarea class="inp" id="dpre-content" rows="4" placeholder="題目文字"
+            onfocus="_trackLatexFocus(this.id)"
+            oninput="updateLatexPreview('dpre-content','dpre-content-preview');dpreMarkDirty()"></textarea>
+          <div id="dpre-content-preview" class="latex-preview" style="margin-top:6px;padding:8px 10px;background:#fff;border:1px dashed var(--border);border-radius:var(--r-md);font-size:.86rem;min-height:24px;color:var(--text)"></div>
+        </div>
+
+        <div class="iw mb3">
+          <label class="lbl">題目附圖</label>
+          <div class="fx ai-c g2x">
+            <input type="file" id="dpre-image-input" accept="image/*" style="display:none" onchange="dpreUploadImage(this, 'main')"/>
+            <button type="button" class="btn btn-g btn-sm" onclick="document.getElementById('dpre-image-input').click()"><i class="fa fa-upload"></i> 上傳</button>
+            <button type="button" class="btn btn-g btn-sm" onclick="dpreRemoveImage('main')" id="dpre-image-remove" style="display:none"><i class="fa fa-trash"></i> 移除</button>
+            <span id="dpre-image-status" style="font-size:.78rem;color:var(--text-l)"></span>
+          </div>
+          <img id="dpre-image-preview" style="display:none;max-width:100%;max-height:140px;margin-top:6px;border-radius:var(--r-md);border:1px solid var(--border)">
+        </div>
+
+        <div class="mb3">
+          <label class="lbl">選項</label>
+          <div style="display:flex;flex-direction:column;gap:6px">
+            <div style="border:1px solid var(--border);border-radius:var(--r-md);padding:6px 8px;background:var(--accent-soft)">
+              <div class="fx ai-c g2x">
+                <span class="chip ci" style="min-width:22px;justify-content:center">A</span>
+                <input class="inp" id="dpre-opt-0" placeholder="選項 A" style="flex:1"
+                  onfocus="_trackLatexFocus(this.id)"
+                  oninput="updateLatexPreview('dpre-opt-0','dpre-opt-0-preview');dpreMarkDirty()"/>
+                <input type="file" id="dpre-opt-img-input-0" accept="image/*" style="display:none" onchange="dpreUploadImage(this, 'A')"/>
+                <button type="button" class="btn btn-g btn-sm" onclick="document.getElementById('dpre-opt-img-input-0').click()" title="附圖" style="padding:4px 8px"><i class="fa fa-image"></i></button>
+                <button type="button" class="btn btn-g btn-sm" onclick="dpreRemoveImage('A')" id="dpre-opt-img-remove-0" style="display:none;padding:4px 8px"><i class="fa fa-trash"></i></button>
+              </div>
+              <div id="dpre-opt-0-preview" class="latex-preview" style="margin:4px 0 0 30px;padding:3px 6px;font-size:.78rem;color:var(--text-m);min-height:16px"></div>
+              <img id="dpre-opt-img-preview-0" style="display:none;max-width:100%;max-height:80px;margin:4px 0 0 30px;border-radius:4px;border:1px solid var(--border)">
+            </div>
+            <div style="border:1px solid var(--border);border-radius:var(--r-md);padding:6px 8px;background:var(--accent-soft)">
+              <div class="fx ai-c g2x">
+                <span class="chip ci" style="min-width:22px;justify-content:center">B</span>
+                <input class="inp" id="dpre-opt-1" placeholder="選項 B" style="flex:1"
+                  onfocus="_trackLatexFocus(this.id)"
+                  oninput="updateLatexPreview('dpre-opt-1','dpre-opt-1-preview');dpreMarkDirty()"/>
+                <input type="file" id="dpre-opt-img-input-1" accept="image/*" style="display:none" onchange="dpreUploadImage(this, 'B')"/>
+                <button type="button" class="btn btn-g btn-sm" onclick="document.getElementById('dpre-opt-img-input-1').click()" title="附圖" style="padding:4px 8px"><i class="fa fa-image"></i></button>
+                <button type="button" class="btn btn-g btn-sm" onclick="dpreRemoveImage('B')" id="dpre-opt-img-remove-1" style="display:none;padding:4px 8px"><i class="fa fa-trash"></i></button>
+              </div>
+              <div id="dpre-opt-1-preview" class="latex-preview" style="margin:4px 0 0 30px;padding:3px 6px;font-size:.78rem;color:var(--text-m);min-height:16px"></div>
+              <img id="dpre-opt-img-preview-1" style="display:none;max-width:100%;max-height:80px;margin:4px 0 0 30px;border-radius:4px;border:1px solid var(--border)">
+            </div>
+            <div style="border:1px solid var(--border);border-radius:var(--r-md);padding:6px 8px;background:var(--accent-soft)">
+              <div class="fx ai-c g2x">
+                <span class="chip ci" style="min-width:22px;justify-content:center">C</span>
+                <input class="inp" id="dpre-opt-2" placeholder="選項 C" style="flex:1"
+                  onfocus="_trackLatexFocus(this.id)"
+                  oninput="updateLatexPreview('dpre-opt-2','dpre-opt-2-preview');dpreMarkDirty()"/>
+                <input type="file" id="dpre-opt-img-input-2" accept="image/*" style="display:none" onchange="dpreUploadImage(this, 'C')"/>
+                <button type="button" class="btn btn-g btn-sm" onclick="document.getElementById('dpre-opt-img-input-2').click()" title="附圖" style="padding:4px 8px"><i class="fa fa-image"></i></button>
+                <button type="button" class="btn btn-g btn-sm" onclick="dpreRemoveImage('C')" id="dpre-opt-img-remove-2" style="display:none;padding:4px 8px"><i class="fa fa-trash"></i></button>
+              </div>
+              <div id="dpre-opt-2-preview" class="latex-preview" style="margin:4px 0 0 30px;padding:3px 6px;font-size:.78rem;color:var(--text-m);min-height:16px"></div>
+              <img id="dpre-opt-img-preview-2" style="display:none;max-width:100%;max-height:80px;margin:4px 0 0 30px;border-radius:4px;border:1px solid var(--border)">
+            </div>
+            <div style="border:1px solid var(--border);border-radius:var(--r-md);padding:6px 8px;background:var(--accent-soft)">
+              <div class="fx ai-c g2x">
+                <span class="chip ci" style="min-width:22px;justify-content:center">D</span>
+                <input class="inp" id="dpre-opt-3" placeholder="選項 D（留空略過）" style="flex:1"
+                  onfocus="_trackLatexFocus(this.id)"
+                  oninput="updateLatexPreview('dpre-opt-3','dpre-opt-3-preview');dpreMarkDirty()"/>
+                <input type="file" id="dpre-opt-img-input-3" accept="image/*" style="display:none" onchange="dpreUploadImage(this, 'D')"/>
+                <button type="button" class="btn btn-g btn-sm" onclick="document.getElementById('dpre-opt-img-input-3').click()" title="附圖" style="padding:4px 8px"><i class="fa fa-image"></i></button>
+                <button type="button" class="btn btn-g btn-sm" onclick="dpreRemoveImage('D')" id="dpre-opt-img-remove-3" style="display:none;padding:4px 8px"><i class="fa fa-trash"></i></button>
+              </div>
+              <div id="dpre-opt-3-preview" class="latex-preview" style="margin:4px 0 0 30px;padding:3px 6px;font-size:.78rem;color:var(--text-m);min-height:16px"></div>
+              <img id="dpre-opt-img-preview-3" style="display:none;max-width:100%;max-height:80px;margin:4px 0 0 30px;border-radius:4px;border:1px solid var(--border)">
+            </div>
+          </div>
+        </div>
+
+        <div class="iw mb3">
+          <label class="lbl">解析（選填）</label>
+          <textarea class="inp" id="dpre-explanation" rows="2"
+            onfocus="_trackLatexFocus(this.id)"
+            oninput="updateLatexPreview('dpre-explanation','dpre-explanation-preview');dpreMarkDirty()"></textarea>
+          <div id="dpre-explanation-preview" class="latex-preview" style="margin-top:6px;padding:6px 10px;background:#fff;border:1px dashed var(--border);border-radius:var(--r-md);font-size:.82rem;min-height:18px;color:var(--text-m)"></div>
         </div>
       </div>
-      <button class="btn btn-g btn-sm" onclick="docxBackToUpload()">
-        <i class="fa fa-arrow-left"></i> 重新上傳
-      </button>
+
+      <!-- RIGHT: original .docx render -->
+      <div style="flex:1;display:flex;flex-direction:column;border-left:1px solid var(--border);padding-left:14px;min-width:380px">
+        <div style="font-size:.78rem;color:var(--text-l);margin-bottom:6px">
+          <i class="fa fa-file-word"></i> 原 .docx 檔案內容（可自由滾動對照）
+        </div>
+        <div style="flex:1;overflow:auto;border:1px solid var(--border);border-radius:var(--r-md);background:#fff;padding:0">
+          <div id="dpre-original-content" style="font-size:.82rem;line-height:1.5;min-width:max-content;padding:10px"></div>
+        </div>
+      </div>
     </div>
-    <div class="gas-cards-scroll" id="docx-cards"></div>
+
+    <!-- Footer -->
     <div style="display:flex;gap:8px;margin-top:14px;border-top:1px solid var(--border);padding-top:14px">
       <button class="btn btn-g" onclick="closeDOCXImportModal()"><i class="fa fa-xmark"></i> 取消</button>
       <button class="btn btn-p" style="flex:1" id="docx-save-btn" onclick="saveDOCXQuestions()">
@@ -9895,9 +10047,9 @@ async function parseDOCXFile() {
       incompleteCount > 0 ? 'in' : 'ok'
     );
 
-    _renderDOCXQuestionPreview(questions);
     _safeSetDisp('docx-step-upload', 'none');
     _safeSetDisp('docx-step-preview', 'block');
+    _dpreInitAfterParse();
 
     // C6.5：對含「如圖/附圖」的題，把第一個公式 chip 用 emf-converter 渲染為 image_data
     if (fbCount > 0) {
@@ -9906,7 +10058,7 @@ async function parseDOCXFile() {
         const enriched = await _enrichDOCXFigures(questions);
         if (enriched > 0) {
           toast(`✅ 補強 ${enriched} 張題目附圖（從 EMF/WMF 渲染）`, 'ok');
-          _renderDOCXQuestionPreview(questions);
+          dpreLoadQuestion(_dpreCurrentIdx);
         }
       } catch (e) {
         console.warn('附圖補強失敗:', e);
@@ -9929,6 +10081,9 @@ async function parseDOCXFile() {
 async function saveDOCXQuestions() {
   const qs = _docxData.questions;
   if (!qs?.length) { toast('沒有可儲存的題目', 'er'); return; }
+
+  // 先把目前正在編輯的題寫回 memory（確保不丟失）
+  if (typeof dpreSaveCurrentToMemory === 'function') dpreSaveCurrentToMemory();
 
   const btn = document.getElementById('docx-save-btn');
   btn.disabled  = true;
@@ -9984,98 +10139,256 @@ async function saveDOCXQuestions() {
   }
 }
 
+/* ── A 情境（匯入確認）：dpre* 系列 — 左半編輯 + 右半原文滾動，題目間切換 ── */
+let _dpreCurrentIdx = 0;
+let _dpreState = { mainImage: null, optionImages: {} };
+
+// 舊 API 相容：deleteDOCXQ / docxEditQuestion 重定向到新流程
 function deleteDOCXQ(i) {
-  _docxData.questions.splice(i, 1);
-  _renderDOCXQuestionPreview(_docxData.questions);
+  _dpreCurrentIdx = i;
+  dpreDeleteCurrent();
+}
+async function docxEditQuestion(idx) {
+  dpreSelectQuestion(idx);
 }
 
-/* C9.1：在預覽階段直接編輯題（記憶體模式，重用 qb-edit-modal） */
-async function docxEditQuestion(idx) {
+function _dpreInitAfterParse() {
+  _dpreCurrentIdx = 0;
+  _dpreState = { mainImage: null, optionImages: {} };
+  const tag = document.getElementById('dpre-publisher-tag');
+  if (tag) tag.textContent = _docxData.publisher || '—';
+  dpreRefreshSelector();
+  if (_docxData.questions.length) dpreLoadQuestion(0);
+  _dpreLoadOriginalPanel();
+}
+
+async function _dpreLoadOriginalPanel() {
+  const target = document.getElementById('dpre-original-content');
+  if (!target) return;
+  target.innerHTML = '<div style="text-align:center;padding:40px 0;color:var(--text-l)"><i class="fa fa-spinner fa-spin"></i> 載入原文中...</div>';
+  try {
+    const cache = await _ensureDocxRenderCache();
+    if (!cache) {
+      target.innerHTML = '<div style="text-align:center;padding:40px 0;color:var(--rose)">原文載入失敗</div>';
+      return;
+    }
+    target.innerHTML = cache.innerHTML;
+    setTimeout(() => dpreScrollOriginalTo(_dpreCurrentIdx), 100);
+  } catch (e) {
+    console.warn('原文預覽載入失敗:', e);
+    target.innerHTML = '<div style="text-align:center;padding:40px 0;color:var(--rose)">原文載入失敗：' + e.message + '</div>';
+  }
+}
+
+function dpreRefreshSelector() {
+  const sel = document.getElementById('dpre-q-selector');
+  if (!sel) return;
+  sel.innerHTML = _docxData.questions.map((q, i) => {
+    const reasons = _detectIncompleteQuestion(q);
+    const mark = reasons.length ? ' ⚠' : '';
+    return `<option value="${i}">第 ${i+1} 題${mark}</option>`;
+  }).join('');
+  sel.value = _dpreCurrentIdx;
+  const cnt = document.getElementById('docx-q-count');
+  if (cnt) cnt.textContent = _docxData.questions.length;
+  const sc = document.getElementById('docx-save-count');
+  if (sc) sc.textContent = _docxData.questions.length;
+  const incompleteCount = _docxData.questions.filter(q => _detectIncompleteQuestion(q).length).length;
+  const sumEl = document.getElementById('dpre-incomplete-summary');
+  if (sumEl) sumEl.textContent = incompleteCount > 0 ? `（⚠ ${incompleteCount} 題待修補）` : '';
+}
+
+function dpreSelectQuestion(idx) {
+  if (idx === _dpreCurrentIdx && document.getElementById('dpre-content')?.value) return;
+  if (_docxData.questions[_dpreCurrentIdx]) dpreSaveCurrentToMemory();
+  _dpreCurrentIdx = idx;
+  dpreLoadQuestion(idx);
+}
+
+function dprePrev() {
+  if (_dpreCurrentIdx > 0) dpreSelectQuestion(_dpreCurrentIdx - 1);
+}
+function dpreNext() {
+  if (_dpreCurrentIdx < _docxData.questions.length - 1) dpreSelectQuestion(_dpreCurrentIdx + 1);
+}
+
+function dpreDeleteCurrent() {
+  if (!_docxData.questions.length) return;
+  if (!confirm(`確認移除第 ${_dpreCurrentIdx + 1} 題？`)) return;
+  _docxData.questions.splice(_dpreCurrentIdx, 1);
+  if (_dpreCurrentIdx >= _docxData.questions.length) {
+    _dpreCurrentIdx = Math.max(0, _docxData.questions.length - 1);
+  }
+  dpreRefreshSelector();
+  if (_docxData.questions.length) {
+    dpreLoadQuestion(_dpreCurrentIdx);
+  } else {
+    document.getElementById('dpre-content').value = '';
+    ['A','B','C','D'].forEach((k, i) => {
+      const el = document.getElementById('dpre-opt-' + i);
+      if (el) el.value = '';
+      dpreRemoveImage(k);
+    });
+    dpreRemoveImage('main');
+  }
+}
+
+function dpreLoadQuestion(idx) {
   const q = _docxData.questions[idx];
   if (!q) return;
-
-  _qbEditId = '__memory_docx__';
-  _qbEditState = {
-    mainImage:    q.image_data || null,
-    optionImages: { ...(q.option_images || {}) },
-    isIncomplete: !!q.is_incomplete,
-    clearedIncomplete: false,
-    docxIdx:      idx,
-  };
-
+  _dpreState = { mainImage: q.image_data || null, optionImages: { ...(q.option_images || {}) } };
   const $ = id => document.getElementById(id);
-  $('qbe-publisher').value     = q.publisher       || '';
-  $('qbe-subject').value       = q.subject         || '數學';
-  $('qbe-unit').value          = q.knowledge_point || '';
-  $('qbe-diff').value          = q.difficulty      || 'medium';
-  $('qbe-content').value       = q.content         || '';
-  $('qbe-answer').value        = q.answer          || 'A';
-  $('qbe-explanation').value   = q.explanation     || '';
-  if ($('qbe-question-type'))  $('qbe-question-type').value = q.question_type || 'single';
-
+  if ($('dpre-publisher'))     $('dpre-publisher').value     = q.publisher       || '';
+  if ($('dpre-subject'))       $('dpre-subject').value       = q.subject         || '數學';
+  if ($('dpre-unit'))          $('dpre-unit').value          = q.knowledge_point || '';
+  if ($('dpre-diff'))          $('dpre-diff').value          = q.difficulty      || 'medium';
+  if ($('dpre-question-type')) $('dpre-question-type').value = q.question_type   || 'single';
+  if ($('dpre-answer'))        $('dpre-answer').value        = q.answer          || 'A';
+  if ($('dpre-content'))       $('dpre-content').value       = q.content         || '';
+  if ($('dpre-explanation'))   $('dpre-explanation').value   = q.explanation     || '';
   ['A','B','C','D'].forEach((k, i) => {
-    const el = $(`qbe-opt-${i}`);
-    if (!el) return;
-    el.value = (q.options && q.options[k]) || '';
+    const el = $('dpre-opt-' + i);
+    if (el) el.value = (q.options && q.options[k]) || '';
   });
-
   // 主圖
   if (q.image_data) {
-    $('qbe-image-preview').src = q.image_data;
-    $('qbe-image-preview').style.display = 'block';
-    $('qbe-image-remove').style.display = 'inline-flex';
-    $('qbe-image-status').textContent = '匯入截取';
+    if ($('dpre-image-preview')) { $('dpre-image-preview').src = q.image_data; $('dpre-image-preview').style.display = 'block'; }
+    if ($('dpre-image-remove'))  $('dpre-image-remove').style.display = 'inline-flex';
+    if ($('dpre-image-status'))  $('dpre-image-status').textContent = '匯入抽取';
   } else {
-    qbeRemoveImage('main');
+    dpreRemoveImage('main');
   }
-
   // 選項圖
   ['A','B','C','D'].forEach((k, i) => {
-    qbeRemoveImage(k);
-    const url = q.option_images?.[k];
-    if (url) {
-      _qbEditState.optionImages[k] = url;
-      const img = $(`qbe-opt-img-preview-${i}`);
-      img.src = url; img.style.display = 'block';
-      $(`qbe-opt-img-remove-${i}`).style.display = 'inline-flex';
+    dpreRemoveImage(k);
+    if (q.option_images?.[k]) {
+      _dpreState.optionImages[k] = q.option_images[k];
+      const img = $('dpre-opt-img-preview-' + i);
+      if (img) { img.src = q.option_images[k]; img.style.display = 'block'; }
+      if ($('dpre-opt-img-remove-' + i)) $('dpre-opt-img-remove-' + i).style.display = 'inline-flex';
     }
   });
-
+  // selector value
+  if ($('dpre-q-selector')) $('dpre-q-selector').value = idx;
   // 缺陷標示
-  const tag = $('qbe-incomplete-tag');
-  const clearBtn = $('qbe-clear-incomplete-btn');
   const reasons = _detectIncompleteQuestion(q);
-  if (reasons.length > 0) {
-    tag.innerHTML = `<span class="chip" style="background:rgba(244,63,94,.12);color:var(--rose);border-color:rgba(244,63,94,.3);font-size:.7rem" title="${escHtml(reasons.join('；'))}"><i class="fa fa-triangle-exclamation"></i> 待修補</span>`;
-    tag.style.display = 'inline';
-    clearBtn.style.display = 'inline-flex';
-  } else {
-    tag.innerHTML = '';
-    tag.style.display = 'none';
-    clearBtn.style.display = 'none';
+  const tagWrap = $('dpre-incomplete-tag-wrap');
+  if (tagWrap) {
+    tagWrap.innerHTML = reasons.length
+      ? `<span class="chip" style="background:rgba(244,63,94,.12);color:var(--rose);border-color:rgba(244,63,94,.3);font-size:.72rem"><i class="fa fa-triangle-exclamation"></i> 此題可能不完整：${escHtml(reasons.join('；'))}</span>`
+      : '';
   }
+  dpreScrollOriginalTo(idx);
+  setTimeout(_dpreRefreshAllPreviews, 30);
+}
 
-  $('qb-edit-modal').classList.add('show');
-  setTimeout(_refreshAllQbePreviews, 50);
+function dpreSaveCurrentToMemory() {
+  const idx = _dpreCurrentIdx;
+  const q = _docxData.questions[idx];
+  if (!q) return;
+  const $ = id => document.getElementById(id);
+  if (!$('dpre-content')) return; // modal 未渲染
+  q.publisher       = $('dpre-publisher').value.trim();
+  q.subject         = $('dpre-subject').value.trim();
+  q.knowledge_point = $('dpre-unit').value.trim();
+  q.difficulty      = $('dpre-diff').value;
+  q.question_type   = $('dpre-question-type').value;
+  q.answer          = $('dpre-answer').value;
+  q.content         = $('dpre-content').value;
+  q.explanation     = $('dpre-explanation').value;
+  q.options = {};
+  ['A','B','C','D'].forEach((k, i) => {
+    const v = $('dpre-opt-' + i).value.trim();
+    if (v) q.options[k] = v;
+  });
+  q.image_data    = _dpreState.mainImage || null;
+  q.option_images = Object.keys(_dpreState.optionImages).length ? { ..._dpreState.optionImages } : null;
+  const reasons = _detectIncompleteQuestion(q);
+  q.is_incomplete      = reasons.length > 0;
+  q.incomplete_reasons = reasons.length > 0 ? reasons : null;
+  dpreRefreshSelector();
+}
 
-  // C9.3：原文滾動預覽 — 從 cache clone 到 modal 內，自動 scroll
-  // 這個 async 在 modal 開啟後背景進行，不阻塞
-  (async () => {
-    try {
-      const cache = await _ensureDocxRenderCache();
-      if (!cache) return;
-      const content = $('qbe-docx-scroll-content');
-      const wrap = $('qbe-docx-scroll-wrap');
-      const status = $('qbe-docx-compare-status');
-      if (!content || !wrap) return;
-      content.innerHTML = cache.innerHTML;
-      wrap.style.display = 'block';
-      if (status) status.textContent = '匯入檔自動載入';
-      const clearBtn = $('qbe-docx-clear-btn');
-      if (clearBtn) clearBtn.style.display = 'inline-flex';
-      setTimeout(() => _scrollDocxPreviewToQuestion(idx), 100);
-    } catch (e) { console.warn('原文預覽載入失敗:', e); }
-  })();
+function dpreUploadImage(input, slot) {
+  const f = input.files?.[0];
+  if (!f) return;
+  if (f.size > 2 * 1024 * 1024) {
+    toast(`圖片過大（${(f.size/1024/1024).toFixed(1)} MB），上限 2 MB`, 'er');
+    input.value = '';
+    return;
+  }
+  const r = new FileReader();
+  r.onload = () => {
+    const url = String(r.result);
+    if (slot === 'main') {
+      _dpreState.mainImage = url;
+      const img = document.getElementById('dpre-image-preview');
+      img.src = url; img.style.display = 'block';
+      document.getElementById('dpre-image-remove').style.display = 'inline-flex';
+      document.getElementById('dpre-image-status').textContent = '已上傳';
+    } else {
+      _dpreState.optionImages[slot] = url;
+      const idx = 'ABCD'.indexOf(slot);
+      const img = document.getElementById('dpre-opt-img-preview-' + idx);
+      img.src = url; img.style.display = 'block';
+      document.getElementById('dpre-opt-img-remove-' + idx).style.display = 'inline-flex';
+    }
+    dpreMarkDirty();
+  };
+  r.readAsDataURL(f);
+}
+
+function dpreRemoveImage(slot) {
+  if (slot === 'main') {
+    _dpreState.mainImage = null;
+    const img = document.getElementById('dpre-image-preview');
+    if (img) img.style.display = 'none';
+    const rmBtn = document.getElementById('dpre-image-remove');
+    if (rmBtn) rmBtn.style.display = 'none';
+    const inp = document.getElementById('dpre-image-input');
+    if (inp) inp.value = '';
+    const st = document.getElementById('dpre-image-status');
+    if (st) st.textContent = '';
+  } else {
+    delete _dpreState.optionImages[slot];
+    const idx = 'ABCD'.indexOf(slot);
+    const img = document.getElementById('dpre-opt-img-preview-' + idx);
+    if (img) img.style.display = 'none';
+    const rmBtn = document.getElementById('dpre-opt-img-remove-' + idx);
+    if (rmBtn) rmBtn.style.display = 'none';
+    const inp = document.getElementById('dpre-opt-img-input-' + idx);
+    if (inp) inp.value = '';
+  }
+}
+
+function _dpreRefreshAllPreviews() {
+  updateLatexPreview('dpre-content', 'dpre-content-preview');
+  updateLatexPreview('dpre-explanation', 'dpre-explanation-preview');
+  for (let i = 0; i < 4; i++) {
+    updateLatexPreview('dpre-opt-' + i, 'dpre-opt-' + i + '-preview');
+  }
+}
+
+function dpreMarkDirty() { /* 切題自動 save，目前無視覺 cue 需要 */ }
+
+function dpreScrollOriginalTo(idx) {
+  const wrap = document.getElementById('dpre-original-content');
+  if (!wrap || !wrap.children.length) return;
+  const q = _docxData.questions[idx];
+  if (!q) return;
+  const tmp = document.createElement('div');
+  tmp.innerHTML = q.content || '';
+  const needle = (tmp.textContent || '').trim().slice(0, 25).replace(/\s+/g, '');
+  if (!needle) return;
+  for (const el of wrap.querySelectorAll('p, div, li, span')) {
+    const t = (el.textContent || '').replace(/\s+/g, '');
+    if (t.includes(needle)) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      el.style.background = 'rgba(99,102,241,.15)';
+      setTimeout(() => { el.style.background = ''; }, 2000);
+      return;
+    }
+  }
 }
 
 function _scrollDocxPreviewToQuestion(idx) {
