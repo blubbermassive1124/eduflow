@@ -2608,11 +2608,13 @@ a { color: var(--indigo); }
 
 <!-- ═══════════════ 題目編輯 Modal ═══════════════ -->
 <div id="qb-edit-modal" class="modal-ov">
-<div class="modal-box" style="max-width:760px;max-height:92vh;overflow-y:auto">
-  <div class="modal-hdr">
+<div class="modal-box" style="max-width:1280px;width:96vw;max-height:94vh;display:flex;flex-direction:column;overflow:hidden">
+  <div class="modal-hdr" style="flex-shrink:0">
     <div class="modal-title"><i class="fa fa-pen" style="color:var(--indigo)"></i> 編輯題目 <span id="qbe-incomplete-tag" style="display:none;margin-left:8px"></span></div>
     <button class="btn btn-g btn-ico" onclick="closeModal('qb-edit-modal')"><i class="fa fa-xmark"></i></button>
   </div>
+  <div style="display:flex;gap:14px;flex:1;overflow:hidden">
+  <div style="flex:1;overflow-y:auto;padding-right:8px;min-width:480px">
   <div class="g2 mb4" style="gap:10px">
     <div class="iw" style="margin:0"><label class="lbl">出版社</label>
       <input class="inp" id="qbe-publisher" placeholder="康軒"/></div>
@@ -2649,24 +2651,6 @@ a { color: var(--indigo); }
     <button type="button" class="btn btn-g btn-sm" onclick="insertLatexBy('vec')"      title="向量"          style="padding:2px 7px;font-size:.78rem">→AB</button>
     <button type="button" class="btn btn-g btn-sm" onclick="insertLatexBy('block')"    title="包公式區塊"     style="padding:2px 7px;font-size:.78rem">$ $</button>
     <span style="font-size:.7rem;color:var(--text-l);align-self:center;margin-left:auto">點符號插入到當前游標位置</span>
-  </div>
-
-  <!-- C9.6：題庫頁編輯時可上傳原 docx 做對照（DOCX 預覽編輯時自動載入匯入檔） -->
-  <div class="iw mb3">
-    <div class="fx ai-c g2x" style="margin-bottom:6px">
-      <label class="lbl" style="margin:0">原文滾動預覽（選填，可上傳對應 .docx 對照）</label>
-      <input type="file" id="qbe-docx-compare-input" accept=".docx" style="display:none" onchange="qbeLoadDocxCompare(this)">
-      <button type="button" class="btn btn-g btn-sm" onclick="document.getElementById('qbe-docx-compare-input').click()" style="padding:3px 10px;font-size:.74rem">
-        <i class="fa fa-file-word"></i> 上傳對照 .docx
-      </button>
-      <button type="button" class="btn btn-g btn-sm" id="qbe-docx-clear-btn" onclick="qbeClearDocxCompare()" style="display:none;padding:3px 10px;font-size:.74rem">
-        <i class="fa fa-times"></i> 清除
-      </button>
-      <span id="qbe-docx-compare-status" style="font-size:.72rem;color:var(--text-l)"></span>
-    </div>
-    <div id="qbe-docx-scroll-wrap" style="display:none;border:1px solid var(--border);border-radius:var(--r-md);background:#fff;max-height:420px;overflow:auto;padding:0">
-      <div id="qbe-docx-scroll-content" style="font-size:.82rem;line-height:1.5;min-width:max-content;padding:8px"></div>
-    </div>
   </div>
 
   <div class="iw mb3">
@@ -2768,7 +2752,36 @@ a { color: var(--indigo); }
       oninput="updateLatexPreview('qbe-explanation','qbe-explanation-preview')"></textarea>
     <div id="qbe-explanation-preview" class="latex-preview" style="margin-top:6px;padding:6px 10px;background:#fff;border:1px dashed var(--border);border-radius:var(--r-md);font-size:.84rem;min-height:20px;color:var(--text-m)"></div>
   </div>
-  <div style="display:flex;gap:8px;border-top:1px solid var(--border);padding-top:14px;flex-wrap:wrap">
+  </div><!-- /split-left -->
+
+  <!-- 右半：原 .docx 對照預覽（常駐顯示，需上傳對應檔案） -->
+  <div style="flex:1;display:flex;flex-direction:column;border-left:1px solid var(--border);padding-left:14px;min-width:380px;overflow:hidden">
+    <div class="fx ai-c g2x" style="margin-bottom:8px;flex-wrap:wrap;flex-shrink:0">
+      <span style="font-size:.78rem;color:var(--text-l)">
+        <i class="fa fa-file-word"></i> 原 .docx 對照
+      </span>
+      <input type="file" id="qbe-docx-compare-input" accept=".docx" style="display:none" onchange="qbeLoadDocxCompare(this)">
+      <button type="button" class="btn btn-g btn-sm" onclick="document.getElementById('qbe-docx-compare-input').click()" style="padding:3px 10px;font-size:.74rem">
+        <i class="fa fa-upload"></i> 上傳 .docx
+      </button>
+      <button type="button" class="btn btn-g btn-sm" id="qbe-docx-clear-btn" onclick="qbeClearDocxCompare()" style="display:none;padding:3px 10px;font-size:.74rem">
+        <i class="fa fa-times"></i> 清除
+      </button>
+      <span id="qbe-docx-compare-status" style="font-size:.72rem;color:var(--text-l)"></span>
+    </div>
+    <div id="qbe-docx-scroll-wrap" style="flex:1;border:1px solid var(--border);border-radius:var(--r-md);background:#fff;overflow:auto;padding:0;min-height:300px">
+      <div id="qbe-docx-scroll-content" style="font-size:.82rem;line-height:1.5;min-width:max-content;padding:8px">
+        <div style="text-align:center;padding:60px 20px;color:var(--text-l);font-size:.82rem">
+          <i class="fa fa-file-word" style="font-size:2rem;opacity:.3;display:block;margin-bottom:10px"></i>
+          按上方「上傳 .docx」<br>顯示原文供對照
+        </div>
+      </div>
+    </div>
+  </div>
+
+  </div><!-- /split-container -->
+
+  <div style="display:flex;gap:8px;border-top:1px solid var(--border);padding:14px;flex-wrap:wrap;flex-shrink:0">
     <button class="btn btn-g" onclick="closeModal('qb-edit-modal')"><i class="fa fa-xmark"></i> 取消</button>
     <button class="btn" id="qbe-clear-incomplete-btn" onclick="qbClearIncomplete()" style="display:none;background:rgba(16,185,129,.12);color:var(--emerald);border:1px solid rgba(16,185,129,.3)">
       <i class="fa fa-circle-check"></i> 已修復，取消缺陷標示
@@ -10429,10 +10442,8 @@ async function qbeLoadDocxCompare(input) {
   if (status) status.textContent = '載入中...';
   try {
     const docxLib = await _loadDocxPreview();
-    const wrap = document.getElementById('qbe-docx-scroll-wrap');
     const content = document.getElementById('qbe-docx-scroll-content');
     content.innerHTML = '';
-    wrap.style.display = 'block';
     document.getElementById('qbe-docx-clear-btn').style.display = 'inline-flex';
     await docxLib.renderAsync(f, content);
     if (status) status.textContent = `已載入 ${f.name}`;
@@ -10462,10 +10473,12 @@ async function qbeLoadDocxCompare(input) {
 }
 
 function qbeClearDocxCompare() {
-  const wrap = document.getElementById('qbe-docx-scroll-wrap');
-  if (wrap) wrap.style.display = 'none';
   const content = document.getElementById('qbe-docx-scroll-content');
-  if (content) content.innerHTML = '';
+  if (content) content.innerHTML = `
+    <div style="text-align:center;padding:60px 20px;color:var(--text-l);font-size:.82rem">
+      <i class="fa fa-file-word" style="font-size:2rem;opacity:.3;display:block;margin-bottom:10px"></i>
+      按上方「上傳 .docx」<br>顯示原文供對照
+    </div>`;
   const clearBtn = document.getElementById('qbe-docx-clear-btn');
   if (clearBtn) clearBtn.style.display = 'none';
   const status = document.getElementById('qbe-docx-compare-status');
