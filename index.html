@@ -10597,6 +10597,31 @@ function _insertAtCursor(el, text) {
   el.selectionStart = el.selectionEnd = start + text.length;
 }
 
+/* 全域 modal 層級管理：後開的 modal 永遠在最上層（解決 z-index 互相蓋住） */
+function _bringModalToTop(el) {
+  if (!el || !el.classList.contains('modal-ov')) return;
+  const others = [...document.querySelectorAll('.modal-ov.show')].filter(e => e !== el);
+  const maxZ = others.reduce((m, e) => {
+    const z = parseInt(getComputedStyle(e).zIndex, 10);
+    return Number.isFinite(z) ? Math.max(m, z) : m;
+  }, 1000);
+  el.style.zIndex = String(maxZ + 1);
+}
+const _modalLayerObserver = new MutationObserver(muts => {
+  for (const m of muts) {
+    if (m.type === 'attributes' && m.attributeName === 'class' && m.target.classList.contains('show')) {
+      _bringModalToTop(m.target);
+    }
+  }
+});
+document.addEventListener('DOMContentLoaded', () => {
+  document.querySelectorAll('.modal-ov').forEach(el => _modalLayerObserver.observe(el, { attributes: true }));
+});
+// 防 DOMContentLoaded 已觸發過：立刻試一次
+if (document.readyState !== 'loading') {
+  document.querySelectorAll('.modal-ov').forEach(el => _modalLayerObserver.observe(el, { attributes: true }));
+}
+
 /* C9.4：全域 paste handler — 對編輯 modal 內的 textarea/input 偵測 Word/MathML 公式並轉 LaTeX */
 document.addEventListener('paste', (e) => {
   const t = e.target;
