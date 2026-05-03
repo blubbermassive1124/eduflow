@@ -2651,13 +2651,7 @@ a { color: var(--indigo); }
     <span style="font-size:.7rem;color:var(--text-l);align-self:center;margin-left:auto">點符號插入到當前游標位置</span>
   </div>
 
-  <!-- C9.2 / C9.6：原 DOCX 該題截圖 + 上傳對照 .docx -->
-  <div id="qbe-source-snapshot-wrap" class="iw mb3" style="display:none">
-    <label class="lbl"><i class="fa fa-camera"></i> 原 DOCX 該題截圖（對照用，不會存入題庫）</label>
-    <img id="qbe-source-snapshot" style="display:block;max-width:100%;max-height:240px;border:1px solid var(--border);border-radius:var(--r-md);background:#fff">
-  </div>
-
-  <!-- C9.6：題庫頁編輯時可上傳原 docx 做對照 -->
+  <!-- C9.6：題庫頁編輯時可上傳原 docx 做對照（DOCX 預覽編輯時自動載入匯入檔） -->
   <div class="iw mb3">
     <div class="fx ai-c g2x" style="margin-bottom:6px">
       <label class="lbl" style="margin:0">原文滾動預覽（選填，可上傳對應 .docx 對照）</label>
@@ -5560,9 +5554,7 @@ function qbClearIncomplete() {
 
 function qbEditQuestion(qid) {
   _qbEditState = { mainImage: null, optionImages: {}, isIncomplete: false, clearedIncomplete: false };
-  // 普通題庫編輯：清掉 DOCX 預覽相關（source_snapshot + 對照預覽）
-  const snapWrap = document.getElementById('qbe-source-snapshot-wrap');
-  if (snapWrap) snapWrap.style.display = 'none';
+  // 普通題庫編輯：清掉 DOCX 對照預覽
   qbeClearDocxCompare();
   sb.from('questions').select('*').eq('id', qid).single().then(({ data: q, error }) => {
     if (error || !q) { toast('載入失敗', 'er'); return; }
@@ -9921,18 +9913,7 @@ async function parseDOCXFile() {
       }
     }
 
-    // C9.2：原文截圖（記憶體暫存，匯入完即丟）
-    btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> 渲染原文 + 截圖中...';
-    try {
-      const captured = await _captureSourceSnapshots();
-      if (captured > 0) {
-        toast(`📷 已產生 ${captured} 張原文對照截圖`, 'ok');
-        _renderDOCXQuestionPreview(questions);
-      }
-    } catch (e) {
-      console.warn('截圖失敗:', e);
-    }
-
+    // C9.2 自動截圖已撤除（性能成本太高），改採用教師在編輯時滾動原文預覽對照（C9.3）
     btn.disabled  = false;
     btn.innerHTML = '<i class="fa fa-check"></i> 解析完成';
   } catch (e) {
@@ -9996,8 +9977,7 @@ async function saveDOCXQuestions() {
   if (saved > 0 && typeof loadQuestionBank === 'function') loadQuestionBank();
   toast(`✅ 已匯入 ${saved} 題到題庫${markNote}`, 'ok');
 
-  // C9.5：匯入完釋放截圖記憶體 + docx-preview cache
-  _docxData.questions.forEach(q => { delete q.source_snapshot; });
+  // 釋放 docx-preview cache（截圖功能已撤）
   if (typeof _docxRenderCacheEl !== 'undefined' && _docxRenderCacheEl) {
     try { document.body.removeChild(_docxRenderCacheEl); } catch {}
     _docxRenderCacheEl = null;
@@ -10073,16 +10053,6 @@ async function docxEditQuestion(idx) {
     tag.innerHTML = '';
     tag.style.display = 'none';
     clearBtn.style.display = 'none';
-  }
-
-  // C9.2：source_snapshot 顯示
-  const snapWrap = $('qbe-source-snapshot-wrap');
-  const snapImg = $('qbe-source-snapshot');
-  if (q.source_snapshot && snapWrap && snapImg) {
-    snapImg.src = q.source_snapshot;
-    snapWrap.style.display = 'block';
-  } else if (snapWrap) {
-    snapWrap.style.display = 'none';
   }
 
   $('qb-edit-modal').classList.add('show');
@@ -10191,7 +10161,7 @@ function qbeClearDocxCompare() {
   if (input) input.value = '';
 }
 
-/* ── C9.2 / C9.3：docx-preview 渲染 cache（hidden）+ 自動截圖 ── */
+/* ── C9.3：docx-preview 渲染 cache（hidden）給編輯時原文滾動對照用 ── */
 let _docxRenderCacheEl = null;
 
 async function _ensureDocxRenderCache() {
@@ -10219,64 +10189,6 @@ async function _ensureDocxRenderCache() {
   }
 }
 
-function _findElementForQuestion(rootEl, q) {
-  const tmp = document.createElement('div');
-  tmp.innerHTML = q.content || '';
-  const needle = (tmp.textContent || '').trim().slice(0, 25).replace(/\s+/g, '');
-  if (!needle) return null;
-  for (const el of rootEl.querySelectorAll('p, div, li')) {
-    const t = (el.textContent || '').replace(/\s+/g, '');
-    if (t.includes(needle)) return el;
-  }
-  return null;
-}
-
-async function _captureSourceSnapshots() {
-  if (!_docxData.questions?.length) return 0;
-  const cache = await _ensureDocxRenderCache();
-  if (!cache) return 0;
-  const html2canvas = await _loadHtml2Canvas();
-  if (!html2canvas) return 0;
-
-  // 先找每題對應 element + range end
-  const allEls = [...cache.querySelectorAll('p, div, li, h1, h2, h3, h4')];
-  const elIndexByQ = _docxData.questions.map(q => {
-    const target = _findElementForQuestion(cache, q);
-    return target ? allEls.indexOf(target) : -1;
-  });
-
-  let captured = 0;
-  for (let i = 0; i < _docxData.questions.length; i++) {
-    const q = _docxData.questions[i];
-    const startIdx = elIndexByQ[i];
-    if (startIdx < 0) continue;
-    // 找下一題 element idx 作為 endIdx
-    let endIdx = allEls.length;
-    for (let j = i + 1; j < elIndexByQ.length; j++) {
-      if (elIndexByQ[j] > startIdx) { endIdx = elIndexByQ[j]; break; }
-    }
-
-    try {
-      // 用 wrapper 包要截的範圍。display:inline-block 讓寬度自動 fit content（B4 / A4 / B5 都對）
-      const wrapper = document.createElement('div');
-      wrapper.style.cssText = 'background:#fff;padding:10px;font-family:sans-serif;color:#000;display:inline-block;min-width:600px';
-      for (let k = startIdx; k < endIdx; k++) {
-        wrapper.appendChild(allEls[k].cloneNode(true));
-      }
-      cache.appendChild(wrapper);
-      const canvas = await html2canvas(wrapper, {
-        scale: 1, useCORS: true, logging: false, backgroundColor: '#fff', allowTaint: true,
-      });
-      cache.removeChild(wrapper);
-      // 壓縮輸出（quality 0.7 jpeg 比 png 小很多）
-      q.source_snapshot = canvas.toDataURL('image/jpeg', 0.7);
-      captured++;
-    } catch (e) {
-      console.warn(`截圖題 ${i+1} 失敗:`, e);
-    }
-  }
-  return captured;
-}
 
 /* ── C9：套件 lazy loader（docx-preview + html2canvas + jszip）── */
 function _loadScriptOnce(src) {
@@ -10297,13 +10209,6 @@ async function _loadDocxPreview() {
   if (!window.docx?.renderAsync) throw new Error('docx-preview 載入失敗');
   return window.docx;
 }
-async function _loadHtml2Canvas() {
-  if (window.html2canvas) return window.html2canvas;
-  await _loadScriptOnce('https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js');
-  if (!window.html2canvas) throw new Error('html2canvas 載入失敗');
-  return window.html2canvas;
-}
-
 /* ── C9.4：Word OMML / MathML → LaTeX 簡化轉換 ── */
 function _ommlToLatex(omml) {
   let s = omml;
@@ -10946,18 +10851,12 @@ function _renderDOCXQuestionPreview(qs) {
       : '';
     const cardStyle = reasons.length ? 'border-left:3px solid var(--rose);background:rgba(244,63,94,.02)' : '';
 
-    const snapshotPreview = q.source_snapshot
-      ? `<details style="margin-top:6px"><summary style="cursor:pointer;font-size:.72rem;color:var(--text-l)"><i class="fa fa-camera"></i> 原 docx 該題截圖</summary>
-           <img src="${q.source_snapshot}" style="display:block;max-width:100%;max-height:240px;margin:6px 0;border:1px solid var(--border);border-radius:4px"></details>`
-      : '';
-
     return `
       <div class="gas-q-card" id="docx-card-${i}" style="${cardStyle}">
         <div class="gas-q-card-hdr">
           <span style="font-size:.75rem;font-weight:700;color:var(--indigo)">第 ${i+1} 題</span>
           ${badge}${diffBadge}${knowBadge}
           ${q.image_data ? '<span class="gas-badge gas-badge-img"><i class="fa fa-image"></i> 含圖</span>' : ''}
-          ${q.source_snapshot ? '<span class="gas-badge" style="background:rgba(99,102,241,.08);color:var(--indigo);font-size:.65rem"><i class="fa fa-camera"></i> 截圖</span>' : ''}
           ${warnBadge}
           <button class="gas-q-card-del" onclick="docxEditQuestion(${i})" title="編輯此題" style="margin-left:auto;background:rgba(99,102,241,.12);color:var(--indigo);border-color:rgba(99,102,241,.25);width:28px;height:28px"><i class="fa fa-pen"></i></button>
           <button class="gas-q-card-del" onclick="deleteDOCXQ(${i})" title="移除此題">
@@ -10967,7 +10866,6 @@ function _renderDOCXQuestionPreview(qs) {
         <div class="gas-q-text">${q.content || '<em>(空)</em>'}</div>
         ${imgPreview}
         ${body}
-        ${snapshotPreview}
       </div>`;
   }).join('');
 }
