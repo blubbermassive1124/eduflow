@@ -8357,6 +8357,11 @@ function renderMath(el) {
 
 function mathHTML(text) {
   if (!text) return "";
+  // 若 text 已含 HTML inline tags（DOCX 匯入後 content 會帶 <em><sub><sup><span class="formula-fallback"> 等），
+  // 直接 passthrough 不做 escape，KaTeX 之後仍會處理 $...$ 部分。
+  if (/<(?:em|sub|sup|span|br|strong|i|b|u|img|p|div)[\s>\/]/i.test(text)) {
+    return text;
+  }
   // 分段處理：先切割出特殊標記，其餘部分做 HTML escape
   const parts = [];
   const re = /\[B64IMG:(data:image\/[^;]+;base64,[^\]]+)\]|\[IMG:([^\]]+)\]/g;
