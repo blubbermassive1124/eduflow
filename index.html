@@ -9578,9 +9578,10 @@ async function saveDOCXQuestions() {
   btn.disabled  = true;
   btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> 儲存中...';
 
-  let saved = 0, failed = 0;
+  let saved = 0, failed = 0, marked = 0;
   for (const q of qs) {
     try {
+      const reasons = _detectIncompleteQuestion(q);
       const row = {
         content:         q.content,
         question_type:   q.question_type === 'true_false' ? 'single' : q.question_type,
@@ -9594,7 +9595,10 @@ async function saveDOCXQuestions() {
         tags:            [],
         status:          'approved',
         created_by:      APP.user?.id || null,
+        is_incomplete:      reasons.length > 0,
+        incomplete_reasons: reasons.length > 0 ? reasons : null,
       };
+      if (reasons.length > 0) marked++;
       if (q.image_data) {
         row.image_data  = q.image_data;
         row.figure_desc = q.figure_desc || '';
@@ -9609,12 +9613,13 @@ async function saveDOCXQuestions() {
   btn.innerHTML = `<i class="fa fa-database"></i> 全部存入題庫（${qs.length} 題）`;
 
   const failNote = failed > 0 ? `，${failed} 題失敗` : '';
-  document.getElementById('docx-done-msg').textContent = `成功匯入 ${saved} 題${failNote}`;
+  const markNote = marked > 0 ? `（其中 ${marked} 題已標示為待修補）` : '';
+  document.getElementById('docx-done-msg').textContent = `成功匯入 ${saved} 題${failNote}${markNote}`;
   document.getElementById('docx-step-preview').style.display = 'none';
   document.getElementById('docx-step-done').style.display    = 'block';
 
   if (saved > 0 && typeof loadQuestionBank === 'function') loadQuestionBank();
-  toast(`✅ 已匯入 ${saved} 題到題庫`, 'ok');
+  toast(`✅ 已匯入 ${saved} 題到題庫${markNote}`, 'ok');
 }
 
 function deleteDOCXQ(i) {
