@@ -2670,8 +2670,8 @@ a { color: var(--indigo); }
       </button>
       <span id="qbe-docx-compare-status" style="font-size:.72rem;color:var(--text-l)"></span>
     </div>
-    <div id="qbe-docx-scroll-wrap" style="display:none;border:1px solid var(--border);border-radius:var(--r-md);background:#fff;max-height:280px;overflow-y:auto;padding:8px">
-      <div id="qbe-docx-scroll-content" style="font-size:.82rem;line-height:1.5"></div>
+    <div id="qbe-docx-scroll-wrap" style="display:none;border:1px solid var(--border);border-radius:var(--r-md);background:#fff;max-height:420px;overflow:auto;padding:0">
+      <div id="qbe-docx-scroll-content" style="font-size:.82rem;line-height:1.5;min-width:max-content;padding:8px"></div>
     </div>
   </div>
 
@@ -10202,7 +10202,8 @@ async function _ensureDocxRenderCache() {
     try { document.body.removeChild(_docxRenderCacheEl); } catch {}
   }
   _docxRenderCacheEl = document.createElement('div');
-  _docxRenderCacheEl.style.cssText = 'position:absolute;left:-9999px;top:0;width:760px;background:#fff';
+  // 寬度不寫死，讓 docx-preview 按 .docx 內 pageSize 渲染（B4/B5/A4 都自適應）
+  _docxRenderCacheEl.style.cssText = 'position:absolute;left:-9999px;top:0;background:#fff';
   _docxRenderCacheEl._sourceFile = _docxData.file;
   document.body.appendChild(_docxRenderCacheEl);
 
@@ -10256,9 +10257,9 @@ async function _captureSourceSnapshots() {
     }
 
     try {
-      // 用 wrapper 包要截的範圍
+      // 用 wrapper 包要截的範圍。display:inline-block 讓寬度自動 fit content（B4 / A4 / B5 都對）
       const wrapper = document.createElement('div');
-      wrapper.style.cssText = 'background:#fff;padding:10px;width:740px;font-family:sans-serif;color:#000';
+      wrapper.style.cssText = 'background:#fff;padding:10px;font-family:sans-serif;color:#000;display:inline-block;min-width:600px';
       for (let k = startIdx; k < endIdx; k++) {
         wrapper.appendChild(allEls[k].cloneNode(true));
       }
