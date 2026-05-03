@@ -1925,6 +1925,8 @@ a { color: var(--indigo); }
             <option value="">全部難度</option><option value="easy">易</option><option value="medium">中</option><option value="hard">難</option></select>
           <select class="inp" id="qb-type" style="width:120px;padding:8px 12px" onchange="loadQuestionBank()">
             <option value="">全部題型</option><option value="single">單選題</option><option value="group">題組</option><option value="fill">填充題</option></select>
+          <select class="inp" id="qb-incomplete" style="width:140px;padding:8px 12px" onchange="loadQuestionBank()">
+            <option value="">完整度（全部）</option><option value="1">⚠ 只看待修補</option><option value="0">✓ 只看已完整</option></select>
           <div class="ii" style="flex:1;min-width:160px"><i class="fa fa-search"></i>
             <input class="inp" id="qb-search" placeholder="搜尋題目..." oninput="loadQuestionBank()"/></div>
           <button class="btn btn-p btn-sm" onclick="openUploadDoc()"><i class="fa fa-file-import"></i> 匯入題目</button>
@@ -2606,9 +2608,9 @@ a { color: var(--indigo); }
 
 <!-- ═══════════════ 題目編輯 Modal ═══════════════ -->
 <div id="qb-edit-modal" class="modal-ov">
-<div class="modal-box" style="max-width:640px;max-height:90vh;overflow-y:auto">
+<div class="modal-box" style="max-width:760px;max-height:92vh;overflow-y:auto">
   <div class="modal-hdr">
-    <div class="modal-title"><i class="fa fa-pen" style="color:var(--indigo)"></i> 編輯題目</div>
+    <div class="modal-title"><i class="fa fa-pen" style="color:var(--indigo)"></i> 編輯題目 <span id="qbe-incomplete-tag" style="display:none;margin-left:8px"></span></div>
     <button class="btn btn-g btn-ico" onclick="closeModal('qb-edit-modal')"><i class="fa fa-xmark"></i></button>
   </div>
   <div class="g2 mb4" style="gap:10px">
@@ -2625,29 +2627,135 @@ a { color: var(--indigo); }
         <option value="easy">易</option><option value="medium">中</option><option value="hard">難</option>
       </select></div>
   </div>
-  <div class="iw mb4"><label class="lbl">題目內容</label>
-    <textarea class="inp" id="qbe-content" rows="4" placeholder="題目文字，支援 $LaTeX$ 語法"></textarea></div>
-  <div class="mb4">
-    <label class="lbl">選項（每行一個）</label>
-    <div id="qbe-opts-wrap" style="display:flex;flex-direction:column;gap:6px">
-      <div class="fx ai-c g2x"><span class="chip ci" style="min-width:22px;justify-content:center">A</span><input class="inp" id="qbe-opt-0" placeholder="選項 A"/></div>
-      <div class="fx ai-c g2x"><span class="chip ci" style="min-width:22px;justify-content:center">B</span><input class="inp" id="qbe-opt-1" placeholder="選項 B"/></div>
-      <div class="fx ai-c g2x"><span class="chip ci" style="min-width:22px;justify-content:center">C</span><input class="inp" id="qbe-opt-2" placeholder="選項 C"/></div>
-      <div class="fx ai-c g2x"><span class="chip ci" style="min-width:22px;justify-content:center">D</span><input class="inp" id="qbe-opt-3" placeholder="選項 D（留空略過）"/></div>
+
+  <!-- LaTeX 符號 palette（共享，依當前 focus 欄位插入） -->
+  <div class="latex-palette" style="display:flex;flex-wrap:wrap;gap:3px;margin-bottom:8px;padding:8px;background:var(--accent-soft);border-radius:var(--r-md);border:1px solid var(--border)">
+    <span style="font-size:.72rem;color:var(--text-l);align-self:center;margin-right:4px">數學符號 →</span>
+    <button type="button" class="btn btn-g btn-sm" onclick="insertLatexBy('frac')"     title="分數"          style="padding:2px 7px;font-size:.78rem">⅔</button>
+    <button type="button" class="btn btn-g btn-sm" onclick="insertLatexBy('sqrt')"     title="根號"          style="padding:2px 7px;font-size:.78rem">√</button>
+    <button type="button" class="btn btn-g btn-sm" onclick="insertLatexBy('pow')"      title="次方"          style="padding:2px 7px;font-size:.78rem">x²</button>
+    <button type="button" class="btn btn-g btn-sm" onclick="insertLatexBy('sub')"      title="下標"          style="padding:2px 7px;font-size:.78rem">x₁</button>
+    <button type="button" class="btn btn-g btn-sm" onclick="insertLatexBy('abs')"      title="絕對值"        style="padding:2px 7px;font-size:.78rem">|x|</button>
+    <button type="button" class="btn btn-g btn-sm" onclick="insertLatexBy('leq')"      title="小於等於"      style="padding:2px 7px;font-size:.78rem">≦</button>
+    <button type="button" class="btn btn-g btn-sm" onclick="insertLatexBy('geq')"      title="大於等於"      style="padding:2px 7px;font-size:.78rem">≧</button>
+    <button type="button" class="btn btn-g btn-sm" onclick="insertLatexBy('neq')"      title="不等於"        style="padding:2px 7px;font-size:.78rem">≠</button>
+    <button type="button" class="btn btn-g btn-sm" onclick="insertLatexBy('perp')"     title="垂直"          style="padding:2px 7px;font-size:.78rem">⊥</button>
+    <button type="button" class="btn btn-g btn-sm" onclick="insertLatexBy('para')"     title="平行"          style="padding:2px 7px;font-size:.78rem">∥</button>
+    <button type="button" class="btn btn-g btn-sm" onclick="insertLatexBy('cong')"     title="全等於"        style="padding:2px 7px;font-size:.78rem">≅</button>
+    <button type="button" class="btn btn-g btn-sm" onclick="insertLatexBy('sim')"      title="相似"          style="padding:2px 7px;font-size:.78rem">∽</button>
+    <button type="button" class="btn btn-g btn-sm" onclick="insertLatexBy('angle')"    title="角"            style="padding:2px 7px;font-size:.78rem">∠</button>
+    <button type="button" class="btn btn-g btn-sm" onclick="insertLatexBy('triangle')" title="三角形"        style="padding:2px 7px;font-size:.78rem">△</button>
+    <button type="button" class="btn btn-g btn-sm" onclick="insertLatexBy('overline')" title="線段（上劃線）" style="padding:2px 7px;font-size:.78rem">‾AB</button>
+    <button type="button" class="btn btn-g btn-sm" onclick="insertLatexBy('vec')"      title="向量"          style="padding:2px 7px;font-size:.78rem">→AB</button>
+    <button type="button" class="btn btn-g btn-sm" onclick="insertLatexBy('block')"    title="包公式區塊"     style="padding:2px 7px;font-size:.78rem">$ $</button>
+    <span style="font-size:.7rem;color:var(--text-l);align-self:center;margin-left:auto">點符號插入到當前游標位置</span>
+  </div>
+
+  <div class="iw mb3">
+    <label class="lbl">題目內容</label>
+    <textarea class="inp" id="qbe-content" rows="4" placeholder="題目文字，支援 $LaTeX$ 語法"
+      onfocus="_trackLatexFocus(this.id)"
+      oninput="updateLatexPreview('qbe-content','qbe-content-preview')"></textarea>
+    <div id="qbe-content-preview" class="latex-preview" style="margin-top:6px;padding:8px 10px;background:#fff;border:1px dashed var(--border);border-radius:var(--r-md);font-size:.88rem;min-height:24px;color:var(--text)"></div>
+  </div>
+
+  <!-- 題目附圖上傳（C8.4） -->
+  <div class="iw mb3">
+    <label class="lbl">題目附圖</label>
+    <div class="fx ai-c g2x">
+      <input type="file" id="qbe-image-input" accept="image/*" style="display:none" onchange="qbeUploadImage(this, 'main')"/>
+      <button type="button" class="btn btn-g btn-sm" onclick="document.getElementById('qbe-image-input').click()">
+        <i class="fa fa-upload"></i> 上傳圖片
+      </button>
+      <button type="button" class="btn btn-g btn-sm" onclick="qbeRemoveImage('main')" id="qbe-image-remove" style="display:none">
+        <i class="fa fa-trash"></i> 移除
+      </button>
+      <span id="qbe-image-status" style="font-size:.78rem;color:var(--text-l)"></span>
+    </div>
+    <img id="qbe-image-preview" style="display:none;max-width:100%;max-height:160px;margin-top:6px;border-radius:var(--r-md);border:1px solid var(--border)">
+  </div>
+
+  <div class="mb3">
+    <label class="lbl">選項（每行一個，可附圖、即時 LaTeX 預覽）</label>
+    <div id="qbe-opts-wrap" style="display:flex;flex-direction:column;gap:8px">
+      <div style="border:1px solid var(--border);border-radius:var(--r-md);padding:6px 8px;background:var(--accent-soft)">
+        <div class="fx ai-c g2x">
+          <span class="chip ci" style="min-width:22px;justify-content:center">A</span>
+          <input class="inp" id="qbe-opt-0" placeholder="選項 A" style="flex:1"
+            onfocus="_trackLatexFocus(this.id)"
+            oninput="updateLatexPreview('qbe-opt-0','qbe-opt-0-preview')"/>
+          <input type="file" id="qbe-opt-img-input-0" accept="image/*" style="display:none" onchange="qbeUploadImage(this, 'A')"/>
+          <button type="button" class="btn btn-g btn-sm" onclick="document.getElementById('qbe-opt-img-input-0').click()" title="附圖" style="padding:4px 8px"><i class="fa fa-image"></i></button>
+          <button type="button" class="btn btn-g btn-sm" onclick="qbeRemoveImage('A')" id="qbe-opt-img-remove-0" style="display:none;padding:4px 8px" title="移除附圖"><i class="fa fa-trash"></i></button>
+        </div>
+        <div id="qbe-opt-0-preview" class="latex-preview" style="margin:4px 0 0 30px;padding:3px 6px;font-size:.8rem;color:var(--text-m);min-height:16px"></div>
+        <img id="qbe-opt-img-preview-0" style="display:none;max-width:100%;max-height:80px;margin:4px 0 0 30px;border-radius:4px;border:1px solid var(--border)">
+      </div>
+      <div style="border:1px solid var(--border);border-radius:var(--r-md);padding:6px 8px;background:var(--accent-soft)">
+        <div class="fx ai-c g2x">
+          <span class="chip ci" style="min-width:22px;justify-content:center">B</span>
+          <input class="inp" id="qbe-opt-1" placeholder="選項 B" style="flex:1"
+            onfocus="_trackLatexFocus(this.id)"
+            oninput="updateLatexPreview('qbe-opt-1','qbe-opt-1-preview')"/>
+          <input type="file" id="qbe-opt-img-input-1" accept="image/*" style="display:none" onchange="qbeUploadImage(this, 'B')"/>
+          <button type="button" class="btn btn-g btn-sm" onclick="document.getElementById('qbe-opt-img-input-1').click()" title="附圖" style="padding:4px 8px"><i class="fa fa-image"></i></button>
+          <button type="button" class="btn btn-g btn-sm" onclick="qbeRemoveImage('B')" id="qbe-opt-img-remove-1" style="display:none;padding:4px 8px" title="移除附圖"><i class="fa fa-trash"></i></button>
+        </div>
+        <div id="qbe-opt-1-preview" class="latex-preview" style="margin:4px 0 0 30px;padding:3px 6px;font-size:.8rem;color:var(--text-m);min-height:16px"></div>
+        <img id="qbe-opt-img-preview-1" style="display:none;max-width:100%;max-height:80px;margin:4px 0 0 30px;border-radius:4px;border:1px solid var(--border)">
+      </div>
+      <div style="border:1px solid var(--border);border-radius:var(--r-md);padding:6px 8px;background:var(--accent-soft)">
+        <div class="fx ai-c g2x">
+          <span class="chip ci" style="min-width:22px;justify-content:center">C</span>
+          <input class="inp" id="qbe-opt-2" placeholder="選項 C" style="flex:1"
+            onfocus="_trackLatexFocus(this.id)"
+            oninput="updateLatexPreview('qbe-opt-2','qbe-opt-2-preview')"/>
+          <input type="file" id="qbe-opt-img-input-2" accept="image/*" style="display:none" onchange="qbeUploadImage(this, 'C')"/>
+          <button type="button" class="btn btn-g btn-sm" onclick="document.getElementById('qbe-opt-img-input-2').click()" title="附圖" style="padding:4px 8px"><i class="fa fa-image"></i></button>
+          <button type="button" class="btn btn-g btn-sm" onclick="qbeRemoveImage('C')" id="qbe-opt-img-remove-2" style="display:none;padding:4px 8px" title="移除附圖"><i class="fa fa-trash"></i></button>
+        </div>
+        <div id="qbe-opt-2-preview" class="latex-preview" style="margin:4px 0 0 30px;padding:3px 6px;font-size:.8rem;color:var(--text-m);min-height:16px"></div>
+        <img id="qbe-opt-img-preview-2" style="display:none;max-width:100%;max-height:80px;margin:4px 0 0 30px;border-radius:4px;border:1px solid var(--border)">
+      </div>
+      <div style="border:1px solid var(--border);border-radius:var(--r-md);padding:6px 8px;background:var(--accent-soft)">
+        <div class="fx ai-c g2x">
+          <span class="chip ci" style="min-width:22px;justify-content:center">D</span>
+          <input class="inp" id="qbe-opt-3" placeholder="選項 D（留空略過）" style="flex:1"
+            onfocus="_trackLatexFocus(this.id)"
+            oninput="updateLatexPreview('qbe-opt-3','qbe-opt-3-preview')"/>
+          <input type="file" id="qbe-opt-img-input-3" accept="image/*" style="display:none" onchange="qbeUploadImage(this, 'D')"/>
+          <button type="button" class="btn btn-g btn-sm" onclick="document.getElementById('qbe-opt-img-input-3').click()" title="附圖" style="padding:4px 8px"><i class="fa fa-image"></i></button>
+          <button type="button" class="btn btn-g btn-sm" onclick="qbeRemoveImage('D')" id="qbe-opt-img-remove-3" style="display:none;padding:4px 8px" title="移除附圖"><i class="fa fa-trash"></i></button>
+        </div>
+        <div id="qbe-opt-3-preview" class="latex-preview" style="margin:4px 0 0 30px;padding:3px 6px;font-size:.8rem;color:var(--text-m);min-height:16px"></div>
+        <img id="qbe-opt-img-preview-3" style="display:none;max-width:100%;max-height:80px;margin:4px 0 0 30px;border-radius:4px;border:1px solid var(--border)">
+      </div>
     </div>
   </div>
-  <div class="g2 mb4" style="gap:10px">
+  <div class="g2 mb3" style="gap:10px">
     <div class="iw" style="margin:0"><label class="lbl">正確答案</label>
       <select class="inp" id="qbe-answer">
         <option value="A">A</option><option value="B">B</option>
         <option value="C">C</option><option value="D">D</option>
       </select></div>
-    <div class="iw" style="margin:0"><label class="lbl">解析（選填）</label>
-      <input class="inp" id="qbe-explanation" placeholder="選填"/></div>
+    <div class="iw" style="margin:0"><label class="lbl">題型</label>
+      <select class="inp" id="qbe-question-type">
+        <option value="single">單選</option><option value="fill">填充</option><option value="group">題組</option>
+      </select></div>
   </div>
-  <div style="display:flex;gap:8px;border-top:1px solid var(--border);padding-top:14px">
+  <div class="iw mb3">
+    <label class="lbl">解析（選填）</label>
+    <textarea class="inp" id="qbe-explanation" rows="2" placeholder="選填，支援 $LaTeX$"
+      onfocus="_trackLatexFocus(this.id)"
+      oninput="updateLatexPreview('qbe-explanation','qbe-explanation-preview')"></textarea>
+    <div id="qbe-explanation-preview" class="latex-preview" style="margin-top:6px;padding:6px 10px;background:#fff;border:1px dashed var(--border);border-radius:var(--r-md);font-size:.84rem;min-height:20px;color:var(--text-m)"></div>
+  </div>
+  <div style="display:flex;gap:8px;border-top:1px solid var(--border);padding-top:14px;flex-wrap:wrap">
     <button class="btn btn-g" onclick="closeModal('qb-edit-modal')"><i class="fa fa-xmark"></i> 取消</button>
-    <button class="btn btn-p" style="flex:1" onclick="qbSaveEdit()"><i class="fa fa-floppy-disk"></i> 儲存變更</button>
+    <button class="btn" id="qbe-clear-incomplete-btn" onclick="qbClearIncomplete()" style="display:none;background:rgba(16,185,129,.12);color:var(--emerald);border:1px solid rgba(16,185,129,.3)">
+      <i class="fa fa-circle-check"></i> 已修復，取消缺陷標示
+    </button>
+    <button class="btn btn-p" style="flex:1;min-width:120px" onclick="qbSaveEdit()"><i class="fa fa-floppy-disk"></i> 儲存變更</button>
   </div>
 </div>
 </div>
@@ -5113,6 +5221,7 @@ async function loadQuestionBank() {
   const unit = document.getElementById('qb-unit')?.value || '';
   const diff = document.getElementById('qb-diff')?.value || '';
   const qtype = document.getElementById('qb-type')?.value || '';
+  const incomplete = document.getElementById('qb-incomplete')?.value || '';
   const search = document.getElementById('qb-search')?.value?.toLowerCase() || '';
 
   let query = sb.from('questions').select('*').eq('status','approved').order('created_at',{ascending:false});
@@ -5120,6 +5229,8 @@ async function loadQuestionBank() {
   if (diff) query = query.eq('difficulty', diff);
   if (qtype) query = query.eq('question_type', qtype);
   if (unit) query = query.ilike('knowledge_point', `%${unit}%`);
+  if (incomplete === '1') query = query.eq('is_incomplete', true);
+  if (incomplete === '0') query = query.or('is_incomplete.is.null,is_incomplete.eq.false');
 
   const { data, count } = await query.limit(200);
   let qs = data || [];
@@ -5146,7 +5257,11 @@ async function loadQuestionBank() {
     const figBadge = q.figure_desc
       ? `<span class="chip" style="background:var(--accent-soft);border-color:var(--border);color:var(--cyan);font-size:.65rem"><i class="fa fa-image"></i> ${q.figure_desc.substring(0,15)}</span>`
       : '';
-    return `<div class="rv-item" id="qb-${q.id}" style="cursor:pointer;${isSelected?'border-left:3px solid var(--indigo);background:var(--accent-soft)':''}" onclick="toggleQBSelect('${q.id}')">
+    const incompleteBadge = q.is_incomplete
+      ? `<span class="chip" style="background:rgba(244,63,94,.12);color:var(--rose);border-color:rgba(244,63,94,.3);font-size:.7rem" title="${escHtml((q.incomplete_reasons || []).join('；') || '內容可能不完整')}"><i class="fa fa-triangle-exclamation"></i> 待修補</span>`
+      : '';
+    const itemBorder = q.is_incomplete && !isSelected ? 'border-left:3px solid var(--rose);background:rgba(244,63,94,.02);' : '';
+    return `<div class="rv-item" id="qb-${q.id}" style="cursor:pointer;${itemBorder}${isSelected?'border-left:3px solid var(--indigo);background:var(--accent-soft)':''}" onclick="toggleQBSelect('${q.id}')">
       <div class="fx ai-c g2x mb2 wr">
         <input type="checkbox" ${isSelected?'checked':''} onclick="event.stopPropagation();toggleQBSelect('${q.id}')" style="accent-color:var(--indigo)">
         <span class="chip ci">${q.publisher||q.subject||'未分類'}</span>
@@ -5154,6 +5269,7 @@ async function loadQuestionBank() {
         <span class="chip cg">${typeLabel}</span>
         ${q.knowledge_point?`<span class="chip cv">${q.knowledge_point}</span>`:''}
         ${figBadge}
+        ${incompleteBadge}
         ${q.question_number?`<span style="font-size:.72rem;color:var(--text-l)">編號 ${q.question_number}</span>`:''}
         <div style="margin-left:auto;display:flex;gap:4px" onclick="event.stopPropagation()">
           <button class="btn btn-g btn-sm" style="padding:3px 8px;font-size:.72rem" onclick="qbEditQuestion('${q.id}')" title="編輯">
@@ -5299,7 +5415,127 @@ function qbDeleteAll() {
 
 /* ── 編輯題目 ── */
 let _qbEditId = null;
+let _qbEditState = { mainImage: null, optionImages: {}, isIncomplete: false, clearedIncomplete: false };
+let _lastLatexFocus = 'qbe-content';
+
+function _trackLatexFocus(id) { _lastLatexFocus = id; }
+
+// LaTeX snippet table — 用 @ 標記預期游標位置（避免 HTML attribute 內反斜線 escape 災難）
+const _LATEX_SNIPPETS = {
+  frac:     '$\\frac{@}{}$',
+  sqrt:     '$\\sqrt{@}$',
+  pow:      '$x^{@}$',
+  sub:      '$x_{@}$',
+  abs:      '$\\left|@\\right|$',
+  leq:      '$\\leq$',
+  geq:      '$\\geq$',
+  neq:      '$\\neq$',
+  perp:     '$\\perp$',
+  para:     '$\\parallel$',
+  cong:     '$\\cong$',
+  sim:      '$\\sim$',
+  angle:    '$\\angle$ ',
+  triangle: '$\\triangle$ ',
+  overline: '$\\overline{@}$',
+  vec:      '$\\overrightarrow{@}$',
+  block:    '$$@$$',
+};
+
+function insertLatexBy(key) {
+  const tpl = _LATEX_SNIPPETS[key];
+  if (!tpl) return;
+  insertLatex(tpl);
+}
+
+function insertLatex(snippetWithCursor) {
+  const id = _lastLatexFocus || 'qbe-content';
+  const el = document.getElementById(id);
+  if (!el) return;
+  const cursorToken = '@';
+  let cursorOffset = snippetWithCursor.indexOf(cursorToken);
+  const snippet    = snippetWithCursor.replace(cursorToken, '');
+  if (cursorOffset < 0) cursorOffset = snippet.length;
+
+  const start  = el.selectionStart || 0;
+  const end    = el.selectionEnd   || 0;
+  const before = el.value.slice(0, start);
+  const after  = el.value.slice(end);
+  el.value = before + snippet + after;
+  el.selectionStart = el.selectionEnd = start + cursorOffset;
+  el.focus();
+  el.dispatchEvent(new Event('input'));
+}
+
+function updateLatexPreview(srcId, dstId) {
+  const src = document.getElementById(srcId);
+  const dst = document.getElementById(dstId);
+  if (!src || !dst) return;
+  dst.innerHTML = mathHTML(src.value || '<span style="color:var(--text-l);font-size:.78rem">（預覽）</span>');
+  setTimeout(() => renderMath(dst), 0);
+}
+
+function _refreshAllQbePreviews() {
+  updateLatexPreview('qbe-content',     'qbe-content-preview');
+  updateLatexPreview('qbe-explanation', 'qbe-explanation-preview');
+  for (let i = 0; i < 4; i++) {
+    updateLatexPreview(`qbe-opt-${i}`, `qbe-opt-${i}-preview`);
+  }
+}
+
+function qbeUploadImage(input, slot) {
+  const f = input.files?.[0];
+  if (!f) return;
+  if (f.size > 2 * 1024 * 1024) {
+    toast(`圖片過大（${(f.size/1024/1024).toFixed(1)} MB），上限 2 MB`, 'er');
+    input.value = '';
+    return;
+  }
+  const r = new FileReader();
+  r.onload = () => {
+    const dataUrl = String(r.result);
+    if (slot === 'main') {
+      _qbEditState.mainImage = dataUrl;
+      const img = document.getElementById('qbe-image-preview');
+      img.src = dataUrl; img.style.display = 'block';
+      document.getElementById('qbe-image-remove').style.display = 'inline-flex';
+      document.getElementById('qbe-image-status').textContent = '已上傳';
+    } else {
+      _qbEditState.optionImages[slot] = dataUrl;
+      const idx = 'ABCD'.indexOf(slot);
+      const img = document.getElementById(`qbe-opt-img-preview-${idx}`);
+      img.src = dataUrl; img.style.display = 'block';
+      document.getElementById(`qbe-opt-img-remove-${idx}`).style.display = 'inline-flex';
+    }
+  };
+  r.readAsDataURL(f);
+}
+
+function qbeRemoveImage(slot) {
+  if (slot === 'main') {
+    _qbEditState.mainImage = null;
+    document.getElementById('qbe-image-preview').style.display = 'none';
+    document.getElementById('qbe-image-remove').style.display = 'none';
+    document.getElementById('qbe-image-status').textContent = '';
+    document.getElementById('qbe-image-input').value = '';
+  } else {
+    delete _qbEditState.optionImages[slot];
+    const idx = 'ABCD'.indexOf(slot);
+    document.getElementById(`qbe-opt-img-preview-${idx}`).style.display = 'none';
+    document.getElementById(`qbe-opt-img-remove-${idx}`).style.display = 'none';
+    document.getElementById(`qbe-opt-img-input-${idx}`).value = '';
+  }
+}
+
+function qbClearIncomplete() {
+  _qbEditState.clearedIncomplete = true;
+  const tag = document.getElementById('qbe-incomplete-tag');
+  tag.innerHTML = '<span class="chip" style="background:rgba(16,185,129,.12);color:var(--emerald);border-color:rgba(16,185,129,.3);font-size:.7rem"><i class="fa fa-circle-check"></i> 將解除標示</span>';
+  document.getElementById('qbe-clear-incomplete-btn').style.display = 'none';
+  toast('儲存後將解除缺陷標示', 'in');
+}
+
 function qbEditQuestion(qid) {
+  _qbEditState = { mainImage: null, optionImages: {}, isIncomplete: false, clearedIncomplete: false };
   sb.from('questions').select('*').eq('id', qid).single().then(({ data: q, error }) => {
     if (error || !q) { toast('載入失敗', 'er'); return; }
     _qbEditId = qid;
@@ -5310,13 +5546,63 @@ function qbEditQuestion(qid) {
     document.getElementById('qbe-content').value     = q.content     || '';
     document.getElementById('qbe-answer').value      = q.answer      || 'A';
     document.getElementById('qbe-explanation').value = q.explanation || '';
-    // 填選項
+    const qtSel = document.getElementById('qbe-question-type');
+    if (qtSel) qtSel.value = q.question_type || 'single';
+
+    // 填選項（兼容三種 options 格式 per project_options_format memory）
     const opts = q.options || {};
     ['A','B','C','D'].forEach((k, i) => {
       const el = document.getElementById(`qbe-opt-${i}`);
-      if (el) el.value = (typeof opts === 'object' && !Array.isArray(opts)) ? (opts[k] || '') : (opts[i] || '');
+      if (!el) return;
+      let val = '';
+      if (typeof opts === 'object' && !Array.isArray(opts)) val = opts[k] || '';
+      else if (Array.isArray(opts)) {
+        const o = opts[i];
+        val = (o && typeof o === 'object') ? (o.text || '') : (o || '');
+      }
+      el.value = val;
     });
+
+    // 載入題目附圖
+    if (q.image_data) {
+      _qbEditState.mainImage = q.image_data;
+      const img = document.getElementById('qbe-image-preview');
+      img.src = q.image_data; img.style.display = 'block';
+      document.getElementById('qbe-image-remove').style.display = 'inline-flex';
+      document.getElementById('qbe-image-status').textContent = '原檔已載入';
+    } else {
+      qbeRemoveImage('main');
+    }
+
+    // 載入選項附圖
+    const oimgs = q.option_images || {};
+    ['A','B','C','D'].forEach(k => {
+      qbeRemoveImage(k);
+      if (oimgs[k]) {
+        _qbEditState.optionImages[k] = oimgs[k];
+        const idx = 'ABCD'.indexOf(k);
+        const img = document.getElementById(`qbe-opt-img-preview-${idx}`);
+        img.src = oimgs[k]; img.style.display = 'block';
+        document.getElementById(`qbe-opt-img-remove-${idx}`).style.display = 'inline-flex';
+      }
+    });
+
+    // 缺陷標示
+    _qbEditState.isIncomplete = !!q.is_incomplete;
+    const tag = document.getElementById('qbe-incomplete-tag');
+    const clearBtn = document.getElementById('qbe-clear-incomplete-btn');
+    if (q.is_incomplete) {
+      const reasons = (q.incomplete_reasons || []).join('；') || '內容可能不完整';
+      tag.innerHTML = `<span class="chip" style="background:rgba(244,63,94,.12);color:var(--rose);border-color:rgba(244,63,94,.3);font-size:.7rem" title="${escHtml(reasons)}"><i class="fa fa-triangle-exclamation"></i> 待修補</span>`;
+      tag.style.display = 'inline';
+      clearBtn.style.display = 'inline-flex';
+    } else {
+      tag.innerHTML = ''; tag.style.display = 'none';
+      clearBtn.style.display = 'none';
+    }
+
     document.getElementById('qb-edit-modal').classList.add('show');
+    setTimeout(_refreshAllQbePreviews, 50);
   });
 }
 
@@ -5333,15 +5619,23 @@ async function qbSaveEdit() {
     subject:         document.getElementById('qbe-subject').value.trim(),
     knowledge_point: document.getElementById('qbe-unit').value.trim(),
     difficulty:      document.getElementById('qbe-diff').value,
+    question_type:   document.getElementById('qbe-question-type')?.value || 'single',
     content:         document.getElementById('qbe-content').value.trim(),
     answer:          document.getElementById('qbe-answer').value,
     explanation:     document.getElementById('qbe-explanation').value.trim(),
     options,
+    image_data:      _qbEditState.mainImage || null,
+    option_images:   Object.keys(_qbEditState.optionImages).length ? _qbEditState.optionImages : null,
   };
+  // 缺陷標示處理：使用者按了「已修復」就清除標示
+  if (_qbEditState.clearedIncomplete) {
+    update.is_incomplete      = false;
+    update.incomplete_reasons = null;
+  }
   const { error } = await sb.from('questions').update(update).eq('id', _qbEditId);
   if (error) { toast('儲存失敗：' + error.message, 'er'); return; }
   closeModal('qb-edit-modal');
-  toast('✅ 已儲存', 'ok');
+  toast(_qbEditState.clearedIncomplete ? '✅ 已儲存並解除缺陷標示' : '✅ 已儲存', 'ok');
   loadQuestionBank();
 }
 
