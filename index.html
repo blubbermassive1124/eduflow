@@ -526,6 +526,9 @@ hr.dv{border:none;border-top:1px solid var(--accent-soft);margin:14px 0}
 .modal-ov{position:fixed;inset:0;z-index:800;background:rgba(26,25,24,.5);
   display:none;justify-content:center;align-items:center;padding:20px}
 .modal-ov.show{display:flex;animation:pageIn .3s cubic-bezier(0.2, 0, 0.2, 1)}
+/* DOCX 匯入確認階段：全屏無 backdrop（Rick spec：避免不小心點外面關掉） */
+.modal-ov.docx-fullpage{background:var(--bg);padding:0}
+.modal-ov.docx-fullpage .modal-box{max-width:none !important;width:100%;height:100%;max-height:100%;border-radius:0;border:none;padding:14px}
 .modal-box{width:100%;max-width:520px;background:var(--raised);
   border:1px solid var(--border);
   border-radius:var(--r-lg);padding:30px;box-shadow:var(--shadow-md);
@@ -3210,10 +3213,13 @@ a { color: var(--indigo); }
         共 <strong id="docx-q-count" style="color:var(--indigo)">0</strong> 題
         <span style="font-size:.74rem;color:var(--text-l);margin-left:6px" id="dpre-incomplete-summary"></span>
       </div>
-      <div class="fx ai-c g2x" style="gap:6px">
+      <div class="fx ai-c g2x" style="gap:6px;flex-wrap:wrap">
         <button class="btn btn-g btn-sm" onclick="dprePrev()" title="上一題" style="padding:5px 10px"><i class="fa fa-chevron-left"></i></button>
-        <select class="inp" id="dpre-q-selector" onchange="dpreSelectQuestion(parseInt(this.value, 10))" style="width:160px;padding:5px 8px;font-size:.82rem"></select>
+        <select class="inp" id="dpre-q-selector" onchange="dpreSelectQuestion(parseInt(this.value, 10))" style="width:170px;padding:5px 8px;font-size:.82rem"></select>
         <button class="btn btn-g btn-sm" onclick="dpreNext()" title="下一題" style="padding:5px 10px"><i class="fa fa-chevron-right"></i></button>
+        <button class="btn btn-p btn-sm" onclick="dpreSaveOneToDb()" title="存入此題到題庫（即時）" style="padding:5px 12px;font-weight:600">
+          <i class="fa fa-floppy-disk"></i> 存此題
+        </button>
         <button class="btn btn-r btn-sm" onclick="dpreDeleteCurrent()" title="移除此題" style="padding:5px 10px"><i class="fa fa-trash"></i></button>
         <button class="btn btn-g btn-sm" onclick="docxBackToUpload()" style="padding:5px 10px"><i class="fa fa-arrow-left"></i> 重新上傳</button>
       </div>
@@ -3370,7 +3376,7 @@ a { color: var(--indigo); }
     <div style="display:flex;gap:8px;margin-top:14px;border-top:1px solid var(--border);padding-top:14px">
       <button class="btn btn-g" onclick="closeDOCXImportModal()"><i class="fa fa-xmark"></i> 取消</button>
       <button class="btn btn-p" style="flex:1" id="docx-save-btn" onclick="saveDOCXQuestions()">
-        <i class="fa fa-database"></i> 全部存入題庫（<span id="docx-save-count">0</span> 題）
+        <i class="fa fa-database"></i> 全部剩餘存入題庫（<span id="docx-save-count">0</span> 題）
       </button>
     </div>
   </div>
@@ -9893,6 +9899,11 @@ function openDOCXImportModal() {
   document.getElementById('docx-import-modal').classList.add('show');
 }
 function closeDOCXImportModal() {
+  // 若仍有未存題，警告
+  if (_docxData.questions?.length && document.getElementById('docx-step-preview').style.display === 'block') {
+    if (!confirm(`還有 ${_docxData.questions.length} 題尚未存入題庫，確定離開？（未存內容會丟失）`)) return;
+  }
+  document.getElementById('docx-import-modal').classList.remove('docx-fullpage');
   closeModal('docx-import-modal');
 }
 function resetDOCXImport() {
@@ -9920,6 +9931,10 @@ function resetDOCXImport() {
   }
 }
 function docxBackToUpload() {
+  if (_docxData.questions?.length && document.getElementById('docx-step-preview').style.display === 'block') {
+    if (!confirm(`還有 ${_docxData.questions.length} 題尚未存入題庫，確定重新上傳？（未存內容會丟失）`)) return;
+  }
+  document.getElementById('docx-import-modal').classList.remove('docx-fullpage');
   document.getElementById('docx-step-upload').style.display  = 'block';
   document.getElementById('docx-step-preview').style.display = 'none';
   document.getElementById('docx-step-done').style.display    = 'none';
@@ -10062,6 +10077,8 @@ async function parseDOCXFile() {
 
     _safeSetDisp('docx-step-upload', 'none');
     _safeSetDisp('docx-step-preview', 'block');
+    // 切換為「全屏外層頁面」模式（無 backdrop，不會誤點關掉）
+    document.getElementById('docx-import-modal').classList.add('docx-fullpage');
     _dpreInitAfterParse();
 
     // C6.5：對含「如圖/附圖」的題，把第一個公式 chip 用 emf-converter 渲染為 image_data
@@ -10145,11 +10162,14 @@ async function saveDOCXQuestions() {
   if (saved > 0 && typeof loadQuestionBank === 'function') loadQuestionBank();
   toast(`✅ 已匯入 ${saved} 題到題庫${markNote}`, 'ok');
 
-  // 釋放 docx-preview cache（截圖功能已撤）
+  // 全部存入完 → 退出 fullpage 模式 + 釋放 cache
+  document.getElementById('docx-import-modal').classList.remove('docx-fullpage');
   if (typeof _docxRenderCacheEl !== 'undefined' && _docxRenderCacheEl) {
     try { document.body.removeChild(_docxRenderCacheEl); } catch {}
     _docxRenderCacheEl = null;
   }
+  // 已批次存入的題目從 memory 清掉
+  _docxData.questions = [];
 }
 
 /* ── A 情境（匯入確認）：dpre* 系列 — 左半編輯 + 右半原文滾動，題目間切換 ── */
@@ -10383,6 +10403,62 @@ function _dpreRefreshAllPreviews() {
 }
 
 function dpreMarkDirty() { /* 切題自動 save，目前無視覺 cue 需要 */ }
+
+/* 分題存檔：把當前題即時存入 supabase，從 questions 移除，自動切下一題 */
+async function dpreSaveOneToDb() {
+  if (!_docxData.questions[_dpreCurrentIdx]) { toast('沒有可存的題目', 'er'); return; }
+  dpreSaveCurrentToMemory();
+  const q = _docxData.questions[_dpreCurrentIdx];
+  const reasons = _detectIncompleteQuestion(q);
+  const row = {
+    content:         q.content,
+    question_type:   q.question_type === 'true_false' ? 'single' : q.question_type,
+    options:         q.options,
+    answer:          q.answer,
+    explanation:     q.explanation || '',
+    difficulty:      q.difficulty   || 'medium',
+    knowledge_point: q.knowledge_point || '',
+    publisher:       q.publisher   || _docxData.publisher || '自訂',
+    subject:         q.subject     || '數學',
+    tags:            [],
+    status:          'approved',
+    created_by:      APP.user?.id || null,
+    is_incomplete:      reasons.length > 0,
+    incomplete_reasons: reasons.length > 0 ? reasons : null,
+  };
+  if (q.image_data)    row.image_data    = q.image_data;
+  if (q.option_images) row.option_images = q.option_images;
+
+  try {
+    const { error } = await sb.from('questions').insert(row);
+    if (error) { toast('存入失敗：' + error.message, 'er'); return; }
+    toast(`✅ 已存入第 ${_dpreCurrentIdx + 1} 題`, 'ok');
+    _docxData.questions.splice(_dpreCurrentIdx, 1);
+    if (_dpreCurrentIdx >= _docxData.questions.length) {
+      _dpreCurrentIdx = Math.max(0, _docxData.questions.length - 1);
+    }
+    dpreRefreshSelector();
+    if (_docxData.questions.length) {
+      dpreLoadQuestion(_dpreCurrentIdx);
+    } else {
+      // 全部存完
+      document.getElementById('docx-import-modal').classList.remove('docx-fullpage');
+      document.getElementById('docx-step-preview').style.display = 'none';
+      document.getElementById('docx-step-done').style.display    = 'block';
+      const msg = document.getElementById('docx-done-msg');
+      if (msg) msg.textContent = '所有題目已逐題存入題庫';
+      if (typeof loadQuestionBank === 'function') loadQuestionBank();
+      // 釋放 cache
+      if (typeof _docxRenderCacheEl !== 'undefined' && _docxRenderCacheEl) {
+        try { document.body.removeChild(_docxRenderCacheEl); } catch {}
+        _docxRenderCacheEl = null;
+      }
+    }
+  } catch (e) {
+    console.error(e);
+    toast('存入失敗：' + e.message, 'er');
+  }
+}
 
 function dpreScrollOriginalTo(idx) {
   const wrap = document.getElementById('dpre-original-content');
