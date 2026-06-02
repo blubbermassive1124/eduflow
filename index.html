@@ -2756,7 +2756,12 @@ a { color: var(--indigo); }
       </select></div>
   </div>
   <div class="iw mb3">
-    <label class="lbl">解析（選填）</label>
+    <div class="fx ai-c" style="justify-content:space-between;gap:8px;margin-bottom:4px">
+      <label class="lbl" style="margin:0">解析（選填）</label>
+      <button type="button" id="qbe-ai-btn" class="btn btn-g btn-sm" onclick="qbeAIGenerate()" title="用 AI 依題目生成解析，並建議難度與單元" style="font-size:.72rem;padding:2px 8px">
+        <i class="fa fa-wand-magic-sparkles"></i> AI 生成解析／標註
+      </button>
+    </div>
     <textarea class="inp" id="qbe-explanation" rows="2" placeholder="選填，支援 $LaTeX$"
       onfocus="_trackLatexFocus(this.id)"
       oninput="updateLatexPreview('qbe-explanation','qbe-explanation-preview')"></textarea>
@@ -5675,6 +5680,65 @@ function _refreshAllQbePreviews() {
   updateLatexPreview('qbe-explanation', 'qbe-explanation-preview');
   for (let i = 0; i < 4; i++) {
     updateLatexPreview(`qbe-opt-${i}`, `qbe-opt-${i}-preview`);
+  }
+}
+
+// AI 生成解析／標註：依目前編輯器的題目內容,用 AI 產生詳解 + 建議難度/單元/常見錯誤,
+// 填回欄位(不覆蓋既有解析,改用附加)。走 'light' 任務(便宜、用內建額度或使用者 key)。
+async function qbeAIGenerate() {
+  const content = document.getElementById('qbe-content').value.trim();
+  if (!content) { toast('請先輸入題目內容再生成', 'er'); return; }
+  const subject = document.getElementById('qbe-subject').value.trim() || '數學';
+  const qtype   = document.getElementById('qbe-question-type')?.value || 'single';
+  const opts    = ['A','B','C','D'].map((k,i)=>document.getElementById(`qbe-opt-${i}`)?.value?.trim()).filter(Boolean);
+  const answer  = document.getElementById('qbe-answer')?.value || '';
+  const explEl  = document.getElementById('qbe-explanation');
+  const hasExpl = !!explEl.value.trim();
+
+  const sys = `你是台灣國高中題庫標註助理。針對提供的「單一題目」建議教學後設資料，只輸出 JSON，不要任何多餘文字。
+規則：
+1. difficulty：只能是 "easy" / "medium" / "hard"，依認知負荷與步驟數判斷。
+2. knowledge_point：課程單元 / 主題（例：「一元一次方程式－移項法則」）。
+3. explanation：${hasExpl ? '若現有解析已足夠可回傳空字串；否則' : ''}寫一段清楚的中文詳解（含必要步驟）。數學公式用 $...$，不要用反斜線跳脫一般字元。
+4. common_mistakes：學生常見錯誤，最多 3 點的字串陣列；無則空陣列。
+5. 不要捏造與題目無關的內容。
+輸出格式：{"difficulty":"easy|medium|hard","knowledge_point":"...","explanation":"...","common_mistakes":["...","..."]}`;
+  const user = [
+    `科目：${subject}`,
+    `題型：${qtype}`,
+    `\n題目：\n${content}`,
+    opts.length ? `\n選項：\n${opts.map((o,i)=>`(${'ABCD'[i]}) ${o}`).join('\n')}` : '',
+    answer ? `\n答案：${answer}` : '',
+    hasExpl ? '\n（本題已有解析）' : '\n（本題尚無解析，請撰寫 explanation）',
+  ].filter(Boolean).join('\n');
+
+  const btn = document.getElementById('qbe-ai-btn');
+  const old = btn ? btn.innerHTML : '';
+  if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> 生成中…'; }
+  try {
+    const text = await callAI([{ role:'system', content: sys }, { role:'user', content: user }], 1500, 'light');
+    let data;
+    try { data = JSON.parse(text.replace(/```json\n?/g,'').replace(/```\n?/g,'').trim()); }
+    catch (e) { toast('AI 回傳格式無法解析，請再試一次', 'er'); return; }
+
+    if (['easy','medium','hard'].includes(data.difficulty))
+      document.getElementById('qbe-diff').value = data.difficulty;
+    if (data.knowledge_point && !document.getElementById('qbe-unit').value.trim())
+      document.getElementById('qbe-unit').value = String(data.knowledge_point).trim();
+
+    let expl = _cleanMathText(String(data.explanation || '').trim());
+    if (Array.isArray(data.common_mistakes) && data.common_mistakes.length)
+      expl = (expl ? expl + '\n\n' : '') + '常見錯誤：\n' + data.common_mistakes.map(m=>'• '+_cleanMathText(String(m))).join('\n');
+    if (expl) {
+      // 不覆蓋老師已寫的解析，改用附加
+      explEl.value = explEl.value.trim() ? explEl.value.trim() + '\n\n' + expl : expl;
+    }
+    _refreshAllQbePreviews();
+    toast('✅ AI 已生成，請檢查後再儲存', 'ok');
+  } catch (e) {
+    toast('AI 生成失敗：' + (e?.message || e), 'er');
+  } finally {
+    if (btn) { btn.disabled = false; btn.innerHTML = old; }
   }
 }
 
