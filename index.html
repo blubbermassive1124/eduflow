@@ -6636,7 +6636,7 @@ async function startPDFImport() {
   }
 }
 
-/* ── AI Vision 解析  EduFlow v4.6.2（v4.6.1 截斷重試 + 本版:source_page+bbox 精準裁切附圖，修復配錯題/整頁塞圖）── */
+/* ── AI Vision 解析  EduFlow v4.6.3（v4.6.1 截斷重試 + v4.6.2 bbox 裁切附圖 + 本版:答案正規化 + 公式去亂碼）── */
 async function parsePagesWithAI(pageBatch, settings, signal, maxTokens = 8192) {
   const { publisher, subject, unit } = settings;
   const pubHint = publisher && publisher !== '自動偵測' ? `出版社：${publisher}` : '出版社：未知（請自動判斷）';
@@ -6651,7 +6651,7 @@ async function parsePagesWithAI(pageBatch, settings, signal, maxTokens = 8192) {
 - content: 題目完整文字（數學公式用 $...$）
 - question_type: "single"/"fill"/"group"
 - options: 如 {"A":"...","B":"...","C":"...","D":"..."}（填充題 {}）
-- answer: 正確答案
+- answer: 正確答案。選擇題只填「代號字母」（單選如 A，多選如 AC）；填充題／題組填答案文字
 - explanation: 詳解（無則空字串）
 - difficulty: "easy"/"medium"/"hard"
 - knowledge_point: 知識點
@@ -6670,7 +6670,9 @@ async function parsePagesWithAI(pageBatch, settings, signal, maxTokens = 8192) {
 6. 作圖題（is_drawing=true）仍然要提取，但標記清楚
 7. 圖形一定要歸給「文字有提到它（右圖／下圖／如圖／附圖／如圖所示）」的那一題，不可配給鄰近的其他題
 8. figure_bbox 要「只」框住圖形本身（含座標軸、必要標示與線段），上下左右都不要框到題號、題幹或選項文字；也不要框太緊而漏掉外圍線段
-9. source_page 與 figure_bbox 必須對應同一張圖片；若圖與題幹不在同一頁，仍以「題幹所在頁」為準` });
+9. source_page 與 figure_bbox 必須對應同一張圖片；若圖與題幹不在同一頁，仍以「題幹所在頁」為準
+10. 所有文字輸出純文字：數學公式用 $...$，但「不要用反斜線跳脫一般字元」（不要寫 \\_ \\* \\# 之類）；中文標點（、，。）不要包進 $...$ 內
+11. 填空題的空格一律用全形括號加空白「（  ）」表示，不要用底線 ____` });
 
   // 記錄每頁圖片 dataUrl，供附圖題使用
   const pageImages = {};
@@ -6736,11 +6738,11 @@ async function parsePagesWithAI(pageBatch, settings, signal, maxTokens = 8192) {
     }
 
     result.push({
-      content: q.content || '',
+      content: _cleanMathText(q.content || ''),
       question_type: q.question_type || 'single',
-      options: q.options || {},
-      answer: q.answer || '',
-      explanation: q.explanation || '',
+      options: _cleanOptions(q.options),
+      answer: _normalizePdfAnswer(q.answer, q.question_type || 'single'),
+      explanation: _cleanMathText(q.explanation || ''),
       difficulty: q.difficulty || 'medium',
       knowledge_point: q.knowledge_point || unit || '',
       publisher: publisher && publisher !== '自動偵測' ? publisher : '自訂',
@@ -6794,6 +6796,39 @@ function _cropFigureFromPage(dataUrl, bbox) {
     img.onerror = () => resolve(null);
     img.src = dataUrl;
   });
+}
+
+/* ── 辨識文字清洗：去掉模型常多吐的 Markdown 反斜線跳脫，並把連續底線填空統一成全形括號 ──
+   只動「2 個以上連續底線」，避免誤傷 LaTeX 下標的單一 _。 */
+function _cleanMathText(s) {
+  if (!s) return s;
+  return String(s)
+    .replace(/(?:\\?_){2,}/g, '（  ）')   // 連續(含跳脫)底線 → 填空格
+    .replace(/\\([_*#~`])/g, '$1');        // 殘留的 markdown 跳脫 \_ \* \# \~ \` → 去掉反斜線
+}
+
+/* 清洗選項物件 {A:..,B:..} 內每個選項文字 */
+function _cleanOptions(opts) {
+  if (!opts || typeof opts !== 'object') return {};
+  const out = {};
+  for (const k of Object.keys(opts)) out[k] = _cleanMathText(String(opts[k] ?? ''));
+  return out;
+}
+
+/* 正規化 PDF 辨識的答案：
+   - 填充/題組 → 清洗後的答案文字
+   - 選擇題 → 抽出代號字母 A-E（含全形、○╳、括號雜訊），如 "（A）"→"A"、"A、C"→"AC"；
+     抽不到字母則保留原文（可能是敘述型答案，交給人工校對） */
+function _normalizePdfAnswer(answer, type) {
+  const raw = (answer == null ? '' : String(answer)).trim();
+  if (!raw) return '';
+  if (type === 'fill') return _cleanMathText(raw);
+  const norm = raw
+    .replace(/[Ａ-Ｚ]/g, c => String.fromCharCode(c.charCodeAt(0) - 0xFEE0))
+    .replace(/○/g, 'A').replace(/╳/g, 'B')
+    .toUpperCase();
+  const letters = (norm.match(/[A-E]/g) || []).join('');
+  return letters || _cleanMathText(raw);
 }
 
 /* 從被截斷的 JSON 文字中搶救出「已完整」的題目物件：
