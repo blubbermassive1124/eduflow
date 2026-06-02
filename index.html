@@ -6636,7 +6636,7 @@ async function startPDFImport() {
   }
 }
 
-/* ── AI Vision 解析  EduFlow v4.6.1（截斷偵測 + 自動拆批重試，修復辨識缺題）── */
+/* ── AI Vision 解析  EduFlow v4.6.2（v4.6.1 截斷重試 + 本版:source_page+bbox 精準裁切附圖，修復配錯題/整頁塞圖）── */
 async function parsePagesWithAI(pageBatch, settings, signal, maxTokens = 8192) {
   const { publisher, subject, unit } = settings;
   const pubHint = publisher && publisher !== '自動偵測' ? `出版社：${publisher}` : '出版社：未知（請自動判斷）';
@@ -6658,6 +6658,8 @@ async function parsePagesWithAI(pageBatch, settings, signal, maxTokens = 8192) {
 - is_drawing: 布林值，若此題是「作圖題」（需要學生畫圖、作圖、尺規作圖）設為 true
 - has_figure: 布林值，若此題附有圖形、圖表、座標圖、幾何圖形等圖片設為 true
 - figure_desc: 若 has_figure 為 true，用文字簡述圖片內容（如「直角三角形 ABC，角 C=90°」）
+- source_page: 此題出現在「第幾張圖片」（整數，從 1 開始，對應下面附給你的圖片順序）
+- figure_bbox: 若 has_figure 為 true，回傳該圖形在所屬圖片(source_page)中的位置框，格式 [ymin, xmin, ymax, xmax]，數值為 0~1000 的相對座標（圖片左上角=0,0、右下角=1000,1000）
 
 規則：
 1. 每道獨立題都要提取，不要遺漏
@@ -6665,7 +6667,10 @@ async function parsePagesWithAI(pageBatch, settings, signal, maxTokens = 8192) {
 3. 看不清用 [?] 標註
 4. 無題目頁回傳 []
 5. 只回傳 JSON 陣列
-6. 作圖題（is_drawing=true）仍然要提取，但標記清楚` });
+6. 作圖題（is_drawing=true）仍然要提取，但標記清楚
+7. 圖形一定要歸給「文字有提到它（右圖／下圖／如圖／附圖／如圖所示）」的那一題，不可配給鄰近的其他題
+8. figure_bbox 要「只」框住圖形本身（含座標軸、必要標示與線段），上下左右都不要框到題號、題幹或選項文字；也不要框太緊而漏掉外圍線段
+9. source_page 與 figure_bbox 必須對應同一張圖片；若圖與題幹不在同一頁，仍以「題幹所在頁」為準` });
 
   // 記錄每頁圖片 dataUrl，供附圖題使用
   const pageImages = {};
@@ -6708,34 +6713,87 @@ async function parsePagesWithAI(pageBatch, settings, signal, maxTokens = 8192) {
     questions = salvaged;
   }
 
-  // 過濾作圖題，並為附圖題附加頁面圖片
+  // 過濾作圖題，並為附圖題裁切出「該題自己那張圖」
+  // （依 source_page 找回正確來源頁、依 figure_bbox 在前端 canvas 精準切出圖形，
+  //   取代舊版「整批所有附圖題都塞同一張第一頁整圖」的錯誤做法）
   let drawingCount = 0;
-  const firstPageImg = pageBatch[0]?.dataUrl || null;
+  const result = [];
+  for (const q of questions) {
+    if (q.is_drawing) { drawingCount++; continue; } // 過濾掉作圖題
 
-  const result = questions.filter(q => {
-    if (q.is_drawing) { drawingCount++; return false; } // 過濾掉作圖題
-    return true;
-  }).map(q => ({
-    content: q.content || '',
-    question_type: q.question_type || 'single',
-    options: q.options || {},
-    answer: q.answer || '',
-    explanation: q.explanation || '',
-    difficulty: q.difficulty || 'medium',
-    knowledge_point: q.knowledge_point || unit || '',
-    publisher: publisher && publisher !== '自動偵測' ? publisher : '自訂',
-    subject,
-    has_figure: !!q.has_figure,
-    figure_desc: q.figure_desc || '',
-    // 附圖題：附加來源頁面的圖片（壓縮版）
-    image_data: q.has_figure ? firstPageImg : null,
-    _selected: true,
-  }));
+    let image_data = null;
+    if (q.has_figure) {
+      // source_page 1 起算，對應本批 pageBatch 順序；超出範圍退回第一頁
+      const sp = Number(q.source_page);
+      const srcPage = (sp >= 1 && sp <= pageBatch.length) ? pageBatch[sp - 1] : pageBatch[0];
+      const pageUrl = srcPage?.dataUrl || null;
+      const bbox = _validBbox(q.figure_bbox);
+      if (pageUrl && bbox) {
+        image_data = await _cropFigureFromPage(pageUrl, bbox); // 依 bbox 精準裁切
+      }
+      // 沒給合法 bbox 或裁切失敗 → 退回「正確那頁」整頁圖（至少不會配到別頁）
+      if (!image_data) image_data = pageUrl;
+    }
+
+    result.push({
+      content: q.content || '',
+      question_type: q.question_type || 'single',
+      options: q.options || {},
+      answer: q.answer || '',
+      explanation: q.explanation || '',
+      difficulty: q.difficulty || 'medium',
+      knowledge_point: q.knowledge_point || unit || '',
+      publisher: publisher && publisher !== '自動偵測' ? publisher : '自訂',
+      subject,
+      has_figure: !!q.has_figure,
+      figure_desc: q.figure_desc || '',
+      image_data,
+      _selected: true,
+    });
+  }
 
   if (drawingCount > 0) {
     toast(`🎨 已自動過濾 ${drawingCount} 題作圖題`, 'in');
   }
   return result;
+}
+
+/* ── PDF 附圖裁切：依 bbox 從整頁圖切出子圖 ──
+   bbox = [ymin, xmin, ymax, xmax]，值域 0..1000（圖片左上角=0,0）。 */
+function _validBbox(b) {
+  if (!Array.isArray(b) || b.length !== 4) return null;
+  const n = b.map(Number);
+  if (n.some(v => !Number.isFinite(v))) return null;
+  const [ymin, xmin, ymax, xmax] = n;
+  if (ymax <= ymin || xmax <= xmin) return null;
+  return n;
+}
+
+function _cropFigureFromPage(dataUrl, bbox) {
+  return new Promise((resolve) => {
+    if (!dataUrl || !bbox) { resolve(null); return; }
+    const img = new Image();
+    img.onload = () => {
+      try {
+        const [ymin, xmin, ymax, xmax] = bbox;
+        const pad = 0.01 * 1000; // 往外留 1% 邊距，避免切太緊削掉線段
+        const W = img.naturalWidth, H = img.naturalHeight;
+        const x1 = Math.max(0, xmin - pad) / 1000 * W;
+        const y1 = Math.max(0, ymin - pad) / 1000 * H;
+        const x2 = Math.min(1000, xmax + pad) / 1000 * W;
+        const y2 = Math.min(1000, ymax + pad) / 1000 * H;
+        const w = Math.max(1, Math.round(x2 - x1));
+        const h = Math.max(1, Math.round(y2 - y1));
+        const canvas = document.createElement('canvas');
+        canvas.width = w; canvas.height = h;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, Math.round(x1), Math.round(y1), w, h, 0, 0, w, h);
+        resolve(canvas.toDataURL('image/jpeg', 0.85));
+      } catch (e) { resolve(null); }
+    };
+    img.onerror = () => resolve(null);
+    img.src = dataUrl;
+  });
 }
 
 /* 從被截斷的 JSON 文字中搶救出「已完整」的題目物件：
