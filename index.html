@@ -6743,7 +6743,7 @@ async function startPDFImport() {
   }
 }
 
-/* ── AI Vision 解析  EduFlow v4.6.4（v4.6.1 截斷重試 + v4.6.2 bbox 裁切附圖 + v4.6.3 答案正規化/公式去亂碼 + 本版:附圖手動拖框重切）── */
+/* ── AI Vision 解析  EduFlow v4.6.5（v4.6.1~4 截斷重試/bbox 裁切/答案正規化/公式去亂碼/手動拖框 + 本版:自動偵測選項圖→option_images）── */
 async function parsePagesWithAI(pageBatch, settings, signal, maxTokens = 8192) {
   const { publisher, subject, unit } = settings;
   const pubHint = publisher && publisher !== '自動偵測' ? `出版社：${publisher}` : '出版社：未知（請自動判斷）';
@@ -6767,6 +6767,7 @@ async function parsePagesWithAI(pageBatch, settings, signal, maxTokens = 8192) {
 - figure_desc: 若 has_figure 為 true，用文字簡述圖片內容（如「直角三角形 ABC，角 C=90°」）
 - source_page: 此題出現在「第幾張圖片」（整數，從 1 開始，對應下面附給你的圖片順序）
 - figure_bbox: 若 has_figure 為 true，回傳該圖形在所屬圖片(source_page)中的位置框，格式 [ymin, xmin, ymax, xmax]，數值為 0~1000 的相對座標（圖片左上角=0,0、右下角=1000,1000）
+- option_bboxes: 「當選項本身就是圖形」時（例：四個選項各畫一個幾何圖要你選哪個），回傳物件 {"A":[ymin,xmin,ymax,xmax],"B":[...],...}，每個 value 是該選項圖形在 source_page 的位置框（0~1000）；此時對應的 options 文字請填 "(圖)"。選項是文字時不要回傳此欄位（或回傳 {}）
 
 規則：
 1. 每道獨立題都要提取，不要遺漏
@@ -6779,7 +6780,8 @@ async function parsePagesWithAI(pageBatch, settings, signal, maxTokens = 8192) {
 8. figure_bbox 要「只」框住圖形本身（含座標軸、必要標示與線段），上下左右都不要框到題號、題幹或選項文字；也不要框太緊而漏掉外圍線段
 9. source_page 與 figure_bbox 必須對應同一張圖片；若圖與題幹不在同一頁，仍以「題幹所在頁」為準
 10. 所有文字輸出純文字：數學公式用 $...$，但「不要用反斜線跳脫一般字元」（不要寫 \\_ \\* \\# 之類）；中文標點（、，。）不要包進 $...$ 內
-11. 填空題的空格一律用全形括號加空白「（  ）」表示，不要用底線 ____` });
+11. 填空題的空格一律用全形括號加空白「（  ）」表示，不要用底線 ____
+12. 「選項是圖形」與「題幹附圖」不同：只有當該選項內容本身就是一張圖（非文字）時，才在 option_bboxes 填該選項、並把該選項文字設為 "(圖)"；每個選項圖的框只框該選項的圖形，不要框到題號或別的選項` });
 
   // 記錄每頁圖片 dataUrl，供附圖題使用
   const pageImages = {};
@@ -6830,14 +6832,14 @@ async function parsePagesWithAI(pageBatch, settings, signal, maxTokens = 8192) {
   for (const q of questions) {
     if (q.is_drawing) { drawingCount++; continue; } // 過濾掉作圖題
 
+    // 來源頁(供主圖/選項圖裁切 + 手動重切)。source_page 1 起算，超範圍退回第一頁。
+    const sp = Number(q.source_page);
+    const srcPage = (sp >= 1 && sp <= pageBatch.length) ? pageBatch[sp - 1] : pageBatch[0];
+    const srcPageUrl = srcPage?.dataUrl || null;
+
     let image_data = null;
-    let srcPageUrl = null;   // 暫存:該題來源頁(供「手動調整圖範圍」重切),不會存進 DB
     let usedBbox = null;     // 暫存:目前裁切框 0..1000
     if (q.has_figure) {
-      // source_page 1 起算，對應本批 pageBatch 順序；超出範圍退回第一頁
-      const sp = Number(q.source_page);
-      const srcPage = (sp >= 1 && sp <= pageBatch.length) ? pageBatch[sp - 1] : pageBatch[0];
-      srcPageUrl = srcPage?.dataUrl || null;
       const bbox = _validBbox(q.figure_bbox);
       if (srcPageUrl && bbox) {
         image_data = await _cropFigureFromPage(srcPageUrl, bbox); // 依 bbox 精準裁切
@@ -6845,6 +6847,17 @@ async function parsePagesWithAI(pageBatch, settings, signal, maxTokens = 8192) {
       }
       // 沒給合法 bbox 或裁切失敗 → 退回「正確那頁」整頁圖（至少不會配到別頁），框預設為整頁
       if (!image_data) { image_data = srcPageUrl; usedBbox = [0, 0, 1000, 1000]; }
+    }
+
+    // 選項本身是圖形 → 依各選項 bbox 切出 option_images（自動偵測選項圖）
+    let option_images = null;
+    if (srcPageUrl && q.option_bboxes && typeof q.option_bboxes === 'object') {
+      const oi = {};
+      for (const k of ['A', 'B', 'C', 'D', 'E']) {
+        const bb = _validBbox(q.option_bboxes[k]);
+        if (bb) { const c = await _cropFigureFromPage(srcPageUrl, bb); if (c) oi[k] = c; }
+      }
+      if (Object.keys(oi).length) option_images = oi;
     }
 
     result.push({
@@ -6860,6 +6873,7 @@ async function parsePagesWithAI(pageBatch, settings, signal, maxTokens = 8192) {
       has_figure: !!q.has_figure,
       figure_desc: q.figure_desc || '',
       image_data,
+      option_images,
       _src_page: srcPageUrl,
       _bbox: usedBbox,
       _selected: true,
@@ -6970,11 +6984,12 @@ function renderParsedPreview() {
     const diffLabel = {easy:'易',medium:'中',hard:'難'}[q.difficulty]||'中';
     const diffCls = {easy:'var(--success)',medium:'var(--warning)',hard:'var(--danger)'}[q.difficulty]||'var(--warning)';
     const typeLabel = {single:'單選',fill:'填充',group:'題組'}[q.question_type]||'單選';
+    const optImgs = q.option_images || {};
     const optHtml = q.question_type !== 'fill' && q.options && Object.keys(q.options).length
-      ? `<div style="font-size:.78rem;color:var(--text-l);margin-top:4px;line-height:1.6">${
+      ? `<div style="font-size:.78rem;color:var(--text-l);margin-top:4px;line-height:1.6;display:flex;flex-wrap:wrap;gap:10px;align-items:center">${
           Object.entries(q.options).map(([k,v]) =>
-            `<span style="${k===q.answer?'color:var(--emerald);font-weight:600':''}">(${k}) ${v}</span>`
-          ).join('　')}</div>` : '';
+            `<span style="${k===q.answer?'color:var(--emerald);font-weight:600':''};display:inline-flex;align-items:center;gap:3px">(${k}) ${v}${optImgs[k]?`<img src="${optImgs[k]}" onclick="viewFullImage(this.src)" style="max-height:46px;border:1px solid var(--border);border-radius:4px;cursor:zoom-in;background:#fff" alt="選項${k}圖">`:''}</span>`
+          ).join('')}</div>` : '';
 
     const imgHtml = q.has_figure && q.image_data
       ? `<img class="q-img-thumb" src="${q.image_data}" onclick="viewFullImage(this.src)" alt="題目附圖" title="點擊放大">`
@@ -6982,6 +6997,10 @@ function renderParsedPreview() {
 
     const figBadge = q.has_figure
       ? `<span class="q-tag" style="background:var(--accent-soft);color:var(--cyan)"><i class="fa fa-image" style="font-size:.55rem"></i> 附圖${q.figure_desc ? '：'+q.figure_desc.substring(0,20) : ''}</span>`
+      : '';
+
+    const optImgBadge = Object.keys(optImgs).length
+      ? `<span class="q-tag" style="background:var(--accent-soft);color:var(--cyan)"><i class="fa fa-images" style="font-size:.55rem"></i> 選項圖×${Object.keys(optImgs).length}</span>`
       : '';
 
     return `<div class="pdf-q-card" id="pdf-q-${i}">
@@ -6998,6 +7017,7 @@ function renderParsedPreview() {
         <span class="q-tag" style="background:${diffCls}20;color:${diffCls}">${diffLabel}</span>
         <span class="q-tag">答：${q.answer||'—'}</span>
         ${figBadge}
+        ${optImgBadge}
         ${q.knowledge_point?`<span class="q-tag"><i class="fa fa-tag" style="font-size:.6rem"></i> ${q.knowledge_point}</span>`:''}
         ${q.publisher?`<span class="q-tag"><i class="fa fa-book" style="font-size:.6rem"></i> ${q.publisher}</span>`:''}
       </div>
@@ -7067,6 +7087,10 @@ async function saveParsedQuestions() {
       if (q.has_figure && q.image_data) {
         row.image_data = q.image_data;
         row.figure_desc = q.figure_desc || '';
+      }
+      // 選項圖（選項本身是圖形）
+      if (q.option_images && Object.keys(q.option_images).length) {
+        row.option_images = q.option_images;
       }
       const { error } = await sb.from('questions').insert(row);
       if (error) { fail++; console.warn('Insert error:', error); } else success++;
