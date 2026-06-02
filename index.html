@@ -6636,8 +6636,8 @@ async function startPDFImport() {
   }
 }
 
-/* ── AI Vision 解析 ── */
-async function parsePagesWithAI(pageBatch, settings, signal) {
+/* ── AI Vision 解析  EduFlow v4.6.1（截斷偵測 + 自動拆批重試，修復辨識缺題）── */
+async function parsePagesWithAI(pageBatch, settings, signal, maxTokens = 8192) {
   const { publisher, subject, unit } = settings;
   const pubHint = publisher && publisher !== '自動偵測' ? `出版社：${publisher}` : '出版社：未知（請自動判斷）';
   const content = [];
@@ -6676,43 +6676,83 @@ async function parsePagesWithAI(pageBatch, settings, signal) {
     pageImages[pg.pageNum] = pg.dataUrl;
   }
 
-  // 使用分級 AI 系統（PDF 辨識 = heavy task）
-  const text = await callAI([{ role: 'user', content }], 4096, 'heavy', signal);
+  // 使用分級 AI 系統（PDF 辨識 = heavy task）。額度從原本 4096 提高到 8192，足夠寫滿一批題目。
+  const text = await callAI([{ role: 'user', content }], maxTokens, 'heavy', signal);
+  const truncated = _lastAITruncated;
 
+  // 嘗試解析 JSON（去除可能的 markdown code fence）
+  let questions = null;
   try {
     const cleaned = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
-    const questions = JSON.parse(cleaned);
-    if (!Array.isArray(questions)) return [];
+    const parsed = JSON.parse(cleaned);
+    if (Array.isArray(parsed)) questions = parsed;
+  } catch (e) { questions = null; }
 
-    // 過濾作圖題，並為附圖題附加頁面圖片
-    let drawingCount = 0;
-    const firstPageImg = pageBatch[0]?.dataUrl || null;
-
-    const result = questions.filter(q => {
-      if (q.is_drawing) { drawingCount++; return false; } // 過濾掉作圖題
-      return true;
-    }).map(q => ({
-      content: q.content || '',
-      question_type: q.question_type || 'single',
-      options: q.options || {},
-      answer: q.answer || '',
-      explanation: q.explanation || '',
-      difficulty: q.difficulty || 'medium',
-      knowledge_point: q.knowledge_point || unit || '',
-      publisher: publisher && publisher !== '自動偵測' ? publisher : '自訂',
-      subject,
-      has_figure: !!q.has_figure,
-      figure_desc: q.figure_desc || '',
-      // 附圖題：附加來源頁面的圖片（壓縮版）
-      image_data: q.has_figure ? firstPageImg : null,
-      _selected: true,
-    }));
-
-    if (drawingCount > 0) {
-      toast(`🎨 已自動過濾 ${drawingCount} 題作圖題`, 'in');
+  // 被截斷 或 解析失敗 → 自動處理，避免整批題目靜默消失（原本會直接 return [] 把題吞掉）
+  if (truncated || questions === null) {
+    if (pageBatch.length > 1) {
+      // 多頁批次 → 拆成兩半各自重新辨識，頁數變少輸出額度就夠
+      const mid = Math.ceil(pageBatch.length / 2);
+      const left = await parsePagesWithAI(pageBatch.slice(0, mid), settings, signal, maxTokens);
+      const right = await parsePagesWithAI(pageBatch.slice(mid), settings, signal, maxTokens);
+      return [...left, ...right];
     }
-    return result;
-  } catch (e) { console.warn('JSON 解析失敗:', text); return []; }
+    if (maxTokens < 16384) {
+      // 已是單頁但仍被截斷 → 加倍額度再試一次
+      return await parsePagesWithAI(pageBatch, settings, signal, maxTokens * 2);
+    }
+    // 單頁 + 最大額度仍失敗 → 搶救已完整的題目並明確提示，不再靜默吞題
+    const salvaged = _salvageQuestions(text);
+    const pg = pageBatch[0]?.pageNum;
+    toast(`⚠️ 第 ${pg} 頁題目太多或太長，辨識被截斷，僅救回 ${salvaged.length} 題，建議將該頁單獨重試`, 'er');
+    questions = salvaged;
+  }
+
+  // 過濾作圖題，並為附圖題附加頁面圖片
+  let drawingCount = 0;
+  const firstPageImg = pageBatch[0]?.dataUrl || null;
+
+  const result = questions.filter(q => {
+    if (q.is_drawing) { drawingCount++; return false; } // 過濾掉作圖題
+    return true;
+  }).map(q => ({
+    content: q.content || '',
+    question_type: q.question_type || 'single',
+    options: q.options || {},
+    answer: q.answer || '',
+    explanation: q.explanation || '',
+    difficulty: q.difficulty || 'medium',
+    knowledge_point: q.knowledge_point || unit || '',
+    publisher: publisher && publisher !== '自動偵測' ? publisher : '自訂',
+    subject,
+    has_figure: !!q.has_figure,
+    figure_desc: q.figure_desc || '',
+    // 附圖題：附加來源頁面的圖片（壓縮版）
+    image_data: q.has_figure ? firstPageImg : null,
+    _selected: true,
+  }));
+
+  if (drawingCount > 0) {
+    toast(`🎨 已自動過濾 ${drawingCount} 題作圖題`, 'in');
+  }
+  return result;
+}
+
+/* 從被截斷的 JSON 文字中搶救出「已完整」的題目物件：
+   從最後一個 } 往前，逐個物件邊界嘗試補上 ] 後 parse，成功即回傳。 */
+function _salvageQuestions(text) {
+  let s = (text || '').replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+  const start = s.indexOf('[');
+  if (start < 0) return [];
+  s = s.slice(start);
+  for (let i = s.lastIndexOf('}'); i > 0; i = s.lastIndexOf('}', i - 1)) {
+    const candidate = s.slice(0, i + 1).replace(/,\s*$/, '') + ']';
+    try {
+      const arr = JSON.parse(candidate);
+      if (Array.isArray(arr)) return arr;
+    } catch (e) { /* 繼續往前找上一個完整物件邊界 */ }
+  }
+  return [];
 }
 
 /* ── 預覽畫面 ── */
@@ -8367,8 +8407,13 @@ async function callOpenAI(messages, maxTokens=500, taskType='light', signal) {
   return await callAI(messages, maxTokens, taskType, signal);
 }
 
+// 記錄「上一次 AI 回應是否因輸出額度用盡而被截斷」(Claude max_tokens / OpenAI length / Gemini MAX_TOKENS)
+// 不改 callAI 的回傳格式,讓 PDF 辨識能在呼叫後讀這個旗標判斷要不要拆批重試。
+let _lastAITruncated = false;
+
 // 統一 AI 呼叫入口
 async function callAI(messages, maxTokens=1024, taskType='light', signal) {
+  _lastAITruncated = false;
   const aiInfo = getAvailableAIKey(taskType);
 
   if (!aiInfo) {
@@ -8446,6 +8491,7 @@ async function callClaudeDirectly(messages, maxTokens, apiKey, signal) {
     throw new Error(e.error?.message || `Claude API 錯誤 ${res.status}`);
   }
   const data = await res.json();
+  _lastAITruncated = data.stop_reason === 'max_tokens';
   return data.content?.[0]?.text || '';
 }
 
@@ -8482,6 +8528,7 @@ async function callOpenAIDirectly(messages, maxTokens, apiKey, signal) {
     throw new Error(e.error?.message || `OpenAI API 錯誤 ${res.status}`);
   }
   const data = await res.json();
+  _lastAITruncated = data.choices?.[0]?.finish_reason === 'length';
   return data.choices?.[0]?.message?.content || '';
 }
 
@@ -8532,6 +8579,7 @@ async function callGeminiDirectly(messages, maxTokens, apiKey, signal) {
     throw new Error(e.error?.message || `Gemini API 錯誤 ${res.status}`);
   }
   const data = await res.json();
+  _lastAITruncated = data.candidates?.[0]?.finishReason === 'MAX_TOKENS';
   return data.candidates?.[0]?.content?.parts?.[0]?.text || '';
 }
 
