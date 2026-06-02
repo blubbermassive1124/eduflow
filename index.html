@@ -4998,21 +4998,31 @@ async function loadAssignments() {
     .select('*, question_sets(name,time_limit_minutes)')
     .order('created_at',{ascending:false});
   const el = document.getElementById('assigns-list');
+  const now = new Date();
   el.innerHTML = (data||[]).map(a => {
-    const due = a.deadline ? new Date(a.deadline) : null;
-    const overdue = due && due < new Date();
-    const dueStr = due ? due.toLocaleDateString('zh-TW') : '無截止';
-    return `<div class="as-card mb3" onclick="startAssignmentQuiz('${a.id}')">
+    const due  = a.deadline ? new Date(a.deadline) : null;
+    const open = a.open_at  ? new Date(a.open_at)  : null;
+    const notOpen = open && open > now;
+    const overdue = due && due < now;
+    const locked  = notOpen || overdue;            // 未開放或已截止都不能作答
+    const dueStr  = due  ? due.toLocaleDateString('zh-TW') : '無截止';
+    const openStr = open ? open.toLocaleString('zh-TW',{month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'}) : '';
+    const statusChip = notOpen
+      ? `<span class="chip ca"><i class="fa fa-lock"></i> ${openStr} 開放</span>`
+      : `<span class="chip ${overdue?'cr':due?'ca':'cg'}">${overdue?'已截止':dueStr}</span>`;
+    return `<div class="as-card mb3"${locked?'':` onclick="startAssignmentQuiz('${a.id}')"`} style="${locked?'opacity:.55;cursor:not-allowed':''}">
       <div class="fx ai-c jb">
         <div>
           <div class="fx g2x mb2 wr">
-            <span class="chip ${overdue?'cr':due?'ca':'cg'}">${overdue?'已截止':dueStr}</span>
+            ${statusChip}
             <span class="chip ci">${a.question_sets?.name||'測驗'}</span>
           </div>
           <div style="font-weight:700;font-size:1rem;margin-bottom:3px">${a.name}</div>
           <div style="font-size:.8rem;color:var(--text-m)">${a.question_sets?.time_limit_minutes||30} 分鐘</div>
         </div>
-        <button class="btn btn-p btn-sm">開始作答</button>
+        ${notOpen ? '<button class="btn btn-g btn-sm" disabled>未開放</button>'
+          : overdue ? '<button class="btn btn-g btn-sm" disabled>已截止</button>'
+          : '<button class="btn btn-p btn-sm">開始作答</button>'}
       </div>
     </div>`;
   }).join('') || '<div style="color:var(--text-l);padding:20px 0">目前沒有指派作業</div>';
@@ -5031,6 +5041,17 @@ async function startAssignmentQuiz(assignId) {
   const { data: assign } = await sb.from('assignments')
     .select('*, question_sets(id,name,time_limit_minutes,total_score)').eq('id',assignId).single();
   if (!assign) { toast('找不到此作業', 'er'); return; }
+  // 時間線把關：未開放 / 已截止 都不可作答
+  const _now = new Date();
+  if (assign.open_at && new Date(assign.open_at) > _now) {
+    const t = new Date(assign.open_at).toLocaleString('zh-TW',{month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'});
+    toast(`此作業尚未開放，將於 ${t} 開放作答`, 'in');
+    return;
+  }
+  if (assign.deadline && new Date(assign.deadline) < _now) {
+    toast('此作業已截止，無法作答', 'er');
+    return;
+  }
   const setId = assign.set_id || assign.question_sets?.id;
   if (!setId) { toast('此作業尚無題目', 'er'); return; }
   const { data: items } = await sb.from('question_set_items')
