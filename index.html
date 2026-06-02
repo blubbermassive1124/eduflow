@@ -533,6 +533,10 @@ hr.dv{border:none;border-top:1px solid var(--accent-soft);margin:14px 0}
   border:1px solid var(--border);
   border-radius:var(--r-lg);padding:30px;box-shadow:var(--shadow-md);
   position:relative;overflow:hidden}
+/* LaTeX 符號工具列：吸頂浮動，左欄捲動後仍可用（.latex-palette 為各編輯場景共用）。
+   背景改不透明（原 --accent-soft 半透明，吸頂時會透出底下內容），並加陰影分隔。 */
+.latex-palette{position:sticky;top:0;z-index:5;background:var(--raised) !important;
+  box-shadow:0 2px 8px rgba(0,0,0,.10)}
 /* ✨ Modal 玻璃折射底層 — filter 在偽元素，不碰文字 */
 /* ✨ Modal 頂部光線條 */
 .modal-box>*{position:relative;z-index:1}
