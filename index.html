@@ -6636,7 +6636,7 @@ async function startPDFImport() {
   }
 }
 
-/* ── AI Vision 解析  EduFlow v4.6.3（v4.6.1 截斷重試 + v4.6.2 bbox 裁切附圖 + 本版:答案正規化 + 公式去亂碼）── */
+/* ── AI Vision 解析  EduFlow v4.6.4（v4.6.1 截斷重試 + v4.6.2 bbox 裁切附圖 + v4.6.3 答案正規化/公式去亂碼 + 本版:附圖手動拖框重切）── */
 async function parsePagesWithAI(pageBatch, settings, signal, maxTokens = 8192) {
   const { publisher, subject, unit } = settings;
   const pubHint = publisher && publisher !== '自動偵測' ? `出版社：${publisher}` : '出版社：未知（請自動判斷）';
@@ -6724,17 +6724,20 @@ async function parsePagesWithAI(pageBatch, settings, signal, maxTokens = 8192) {
     if (q.is_drawing) { drawingCount++; continue; } // 過濾掉作圖題
 
     let image_data = null;
+    let srcPageUrl = null;   // 暫存:該題來源頁(供「手動調整圖範圍」重切),不會存進 DB
+    let usedBbox = null;     // 暫存:目前裁切框 0..1000
     if (q.has_figure) {
       // source_page 1 起算，對應本批 pageBatch 順序；超出範圍退回第一頁
       const sp = Number(q.source_page);
       const srcPage = (sp >= 1 && sp <= pageBatch.length) ? pageBatch[sp - 1] : pageBatch[0];
-      const pageUrl = srcPage?.dataUrl || null;
+      srcPageUrl = srcPage?.dataUrl || null;
       const bbox = _validBbox(q.figure_bbox);
-      if (pageUrl && bbox) {
-        image_data = await _cropFigureFromPage(pageUrl, bbox); // 依 bbox 精準裁切
+      if (srcPageUrl && bbox) {
+        image_data = await _cropFigureFromPage(srcPageUrl, bbox); // 依 bbox 精準裁切
+        if (image_data) usedBbox = bbox;
       }
-      // 沒給合法 bbox 或裁切失敗 → 退回「正確那頁」整頁圖（至少不會配到別頁）
-      if (!image_data) image_data = pageUrl;
+      // 沒給合法 bbox 或裁切失敗 → 退回「正確那頁」整頁圖（至少不會配到別頁），框預設為整頁
+      if (!image_data) { image_data = srcPageUrl; usedBbox = [0, 0, 1000, 1000]; }
     }
 
     result.push({
@@ -6750,6 +6753,8 @@ async function parsePagesWithAI(pageBatch, settings, signal, maxTokens = 8192) {
       has_figure: !!q.has_figure,
       figure_desc: q.figure_desc || '',
       image_data,
+      _src_page: srcPageUrl,
+      _bbox: usedBbox,
       _selected: true,
     });
   }
@@ -6771,14 +6776,14 @@ function _validBbox(b) {
   return n;
 }
 
-function _cropFigureFromPage(dataUrl, bbox) {
+function _cropFigureFromPage(dataUrl, bbox, paddingPct = 0.01) {
   return new Promise((resolve) => {
     if (!dataUrl || !bbox) { resolve(null); return; }
     const img = new Image();
     img.onload = () => {
       try {
         const [ymin, xmin, ymax, xmax] = bbox;
-        const pad = 0.01 * 1000; // 往外留 1% 邊距，避免切太緊削掉線段
+        const pad = paddingPct * 1000; // 往外留邊距，避免切太緊削掉線段（手動拖框時傳 0＝精確範圍）
         const W = img.naturalWidth, H = img.naturalHeight;
         const x1 = Math.max(0, xmin - pad) / 1000 * W;
         const y1 = Math.max(0, ymin - pad) / 1000 * H;
@@ -6891,6 +6896,7 @@ function renderParsedPreview() {
       </div>
       <div class="pdf-q-actions">
         <button class="btn btn-g btn-sm" style="font-size:.7rem;padding:3px 8px" onclick="editParsedQ(${i})"><i class="fa fa-pen"></i> 編輯</button>
+        ${q.has_figure && q._src_page ? `<button class="btn btn-g btn-sm" style="font-size:.7rem;padding:3px 8px" onclick="openCropEditor(${i})"><i class="fa fa-crop"></i> 調整圖範圍</button>` : ''}
         <button class="btn btn-g btn-sm" style="font-size:.7rem;padding:3px 8px" onclick="removeParsedQ(${i})"><i class="fa fa-trash"></i></button>
       </div>
     </div>`;
@@ -8749,6 +8755,113 @@ function viewFullImage(src) {
   ov.onclick = () => ov.remove();
   ov.innerHTML = `<img src="${src}" alt="附圖放大">`;
   document.body.appendChild(ov);
+}
+
+/* ── PDF 附圖：手動拖框調整裁切範圍（AI 切歪時的安全網）──
+   用該題暫存的來源頁 _src_page + 目前框 _bbox，讓老師在原頁上拉一個矩形重切。 */
+function openCropEditor(idx) {
+  const q = _parsedQuestions[idx];
+  if (!q || !q._src_page) { toast('此題沒有可調整的來源圖', 'er'); return; }
+  const MAXW = 760;
+  const startBbox = _validBbox(q._bbox) || [0, 0, 1000, 1000];
+
+  const ov = document.createElement('div');
+  ov.style.cssText = 'position:fixed;inset:0;z-index:10000;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;padding:16px';
+  ov.innerHTML = `
+    <div style="background:var(--bg-card,#1b1b1f);border:1px solid var(--border,#333);border-radius:12px;padding:14px;max-height:92vh;overflow:auto;color:var(--text,#eee)">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:18px;margin-bottom:10px">
+        <div style="font-size:.82rem;color:var(--text-l,#aaa)">拖曳框內可移動，拉四角可縮放；調到剛好框住圖形即可。</div>
+        <div style="display:flex;gap:8px">
+          <button id="_crop-cancel" class="btn btn-g btn-sm">取消</button>
+          <button id="_crop-apply" class="btn btn-p btn-sm">套用</button>
+        </div>
+      </div>
+      <div id="_crop-stage" style="position:relative;user-select:none;touch-action:none;margin:0 auto">
+        <img id="_crop-img" src="${q._src_page}" alt="來源頁面" draggable="false" style="display:block">
+        <div id="_crop-box" style="position:absolute;border:2px solid #2dd4bf;cursor:move;box-shadow:0 0 0 9999px rgba(0,0,0,.45)"></div>
+      </div>
+    </div>`;
+  document.body.appendChild(ov);
+
+  const img = ov.querySelector('#_crop-img');
+  const stage = ov.querySelector('#_crop-stage');
+  const boxEl = ov.querySelector('#_crop-box');
+  let dims = null, box = null, drag = null;
+
+  // 四角縮放把手
+  [['nw','left:-6px;top:-6px;cursor:nwse-resize'],
+   ['ne','right:-6px;top:-6px;cursor:nesw-resize'],
+   ['sw','left:-6px;bottom:-6px;cursor:nesw-resize'],
+   ['se','right:-6px;bottom:-6px;cursor:nwse-resize']].forEach(([mode, css]) => {
+    const h = document.createElement('div');
+    h.dataset.mode = mode;
+    h.style.cssText = 'position:absolute;width:12px;height:12px;background:#2dd4bf;border:1px solid #fff;border-radius:2px;' + css;
+    boxEl.appendChild(h);
+  });
+
+  function clamp(b) {
+    let { x, y, w, h } = b;
+    w = Math.max(10, w); h = Math.max(10, h);
+    x = Math.min(Math.max(0, x), dims.dw - 10);
+    y = Math.min(Math.max(0, y), dims.dh - 10);
+    w = Math.min(w, dims.dw - x); h = Math.min(h, dims.dh - y);
+    return { x, y, w, h };
+  }
+  function paint() {
+    boxEl.style.left = box.x + 'px'; boxEl.style.top = box.y + 'px';
+    boxEl.style.width = box.w + 'px'; boxEl.style.height = box.h + 'px';
+  }
+  function onLoad() {
+    const W0 = img.naturalWidth, H0 = img.naturalHeight;
+    if (!W0) { toast('來源圖載入失敗', 'er'); ov.remove(); return; }
+    const dw = Math.min(W0, MAXW), scale = dw / W0, dh = H0 * scale;
+    img.style.width = dw + 'px'; img.style.height = dh + 'px';
+    stage.style.width = dw + 'px'; stage.style.height = dh + 'px';
+    dims = { dw, dh };
+    const [ymin, xmin, ymax, xmax] = startBbox;
+    box = clamp({ x: xmin / 1000 * dw, y: ymin / 1000 * dh, w: (xmax - xmin) / 1000 * dw, h: (ymax - ymin) / 1000 * dh });
+    paint();
+  }
+  if (img.complete && img.naturalWidth) onLoad(); else img.onload = onLoad;
+
+  function startDrag(mode, e) {
+    e.preventDefault(); e.stopPropagation();
+    if (!box) return;
+    drag = { mode, sx: e.clientX, sy: e.clientY, box: { ...box } };
+    try { e.currentTarget.setPointerCapture && e.currentTarget.setPointerCapture(e.pointerId); } catch (_) {}
+  }
+  boxEl.addEventListener('pointerdown', e => { if (e.target === boxEl) startDrag('move', e); });
+  boxEl.querySelectorAll('[data-mode]').forEach(h =>
+    h.addEventListener('pointerdown', e => startDrag(h.dataset.mode, e)));
+  stage.addEventListener('pointermove', e => {
+    if (!drag || !dims) return;
+    const dx = e.clientX - drag.sx, dy = e.clientY - drag.sy, ob = drag.box, nb = { ...ob };
+    if (drag.mode === 'move') { nb.x = ob.x + dx; nb.y = ob.y + dy; }
+    else {
+      if (drag.mode.includes('w')) { nb.x = ob.x + dx; nb.w = ob.w - dx; }
+      if (drag.mode.includes('e')) { nb.w = ob.w + dx; }
+      if (drag.mode.includes('n')) { nb.y = ob.y + dy; nb.h = ob.h - dy; }
+      if (drag.mode.includes('s')) { nb.h = ob.h + dy; }
+    }
+    box = clamp(nb); paint();
+  });
+  const endDrag = () => { drag = null; };
+  stage.addEventListener('pointerup', endDrag);
+  stage.addEventListener('pointerleave', endDrag);
+
+  ov.querySelector('#_crop-cancel').onclick = () => ov.remove();
+  ov.querySelector('#_crop-apply').onclick = async () => {
+    if (!box || !dims) { ov.remove(); return; }
+    const bbox = [
+      box.y / dims.dh * 1000, box.x / dims.dw * 1000,
+      (box.y + box.h) / dims.dh * 1000, (box.x + box.w) / dims.dw * 1000,
+    ];
+    const cropped = await _cropFigureFromPage(q._src_page, bbox, 0); // 手動框＝精確，不加 padding
+    if (cropped) { q.image_data = cropped; q._bbox = bbox; toast('✅ 已更新裁切範圍', 'ok'); }
+    else toast('裁切失敗，請重試', 'er');
+    ov.remove();
+    renderParsedPreview();
+  };
 }
 
 function showConfirm(title, msg, okLabel, okClass, onOk, icon='⚠️') {
