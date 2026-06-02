@@ -1160,6 +1160,7 @@ a { color: var(--indigo); }
     <div class="login-logo">
       <div class="logo-txt">EduFlow</div>
       <div class="logo-sub">智慧教學測驗系統 · 智慧學習，因材施教</div>
+      <div style="font-size:.72rem;color:var(--text-l);margin-top:6px;letter-spacing:.04em">v4.6.6</div>
     </div>
     <div class="role-sw" id="role-sw">
       <button class="role-btn on" onclick="setRole('student',this)"><i class="fa fa-user-graduate"></i> 學生</button>
@@ -6797,7 +6798,7 @@ async function startPDFImport() {
   }
 }
 
-/* ── AI Vision 解析  EduFlow v4.6.5（v4.6.1~4 截斷重試/bbox 裁切/答案正規化/公式去亂碼/手動拖框 + 本版:自動偵測選項圖→option_images）── */
+/* ── AI Vision 解析  EduFlow v4.6.6（v4.6.1~4 截斷重試/bbox 裁切/答案正規化/公式去亂碼/手動拖框、v4.6.5:自動偵測選項圖→option_images、v4.6.6:題目強調工具+派發任務時間線把關）── */
 async function parsePagesWithAI(pageBatch, settings, signal, maxTokens = 8192) {
   const { publisher, subject, unit } = settings;
   const pubHint = publisher && publisher !== '自動偵測' ? `出版社：${publisher}` : '出版社：未知（請自動判斷）';
