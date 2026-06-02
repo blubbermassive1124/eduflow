@@ -2657,7 +2657,11 @@ a { color: var(--indigo); }
     <button type="button" class="btn btn-g btn-sm" onclick="insertLatexBy('overline')" title="線段（上劃線）" style="padding:2px 7px;font-size:.78rem">‾AB</button>
     <button type="button" class="btn btn-g btn-sm" onclick="insertLatexBy('vec')"      title="向量"          style="padding:2px 7px;font-size:.78rem">→AB</button>
     <button type="button" class="btn btn-g btn-sm" onclick="insertLatexBy('block')"    title="包公式區塊"     style="padding:2px 7px;font-size:.78rem">$ $</button>
-    <span style="font-size:.7rem;color:var(--text-l);align-self:center;margin-left:auto">點符號插入到當前游標位置</span>
+    <span style="width:1px;align-self:stretch;background:var(--border);margin:0 3px"></span>
+    <button type="button" class="btn btn-g btn-sm" onclick="wrapSelectionTag('bold')"  title="加粗：先選取文字再點"   style="padding:2px 9px;font-size:.82rem;font-weight:800">B</button>
+    <button type="button" class="btn btn-g btn-sm" onclick="wrapSelectionTag('big')"   title="放大：先選取文字再點"   style="padding:2px 7px;font-size:.92rem">A⁺</button>
+    <button type="button" class="btn btn-g btn-sm" onclick="wrapSelectionTag('small')" title="縮小：先選取文字再點"   style="padding:2px 7px;font-size:.7rem">A⁻</button>
+    <span style="font-size:.7rem;color:var(--text-l);align-self:center;margin-left:auto">符號插游標處；B/A⁺/A⁻ 請先選字</span>
   </div>
 
   <div class="iw mb3">
@@ -3262,6 +3266,10 @@ a { color: var(--indigo); }
           <button type="button" class="btn btn-g btn-sm" onclick="insertLatexBy('overline')" title="線段（上劃線）" style="padding:2px 7px;font-size:.78rem">‾AB</button>
           <button type="button" class="btn btn-g btn-sm" onclick="insertLatexBy('vec')"      title="向量"          style="padding:2px 7px;font-size:.78rem">→AB</button>
           <button type="button" class="btn btn-g btn-sm" onclick="insertLatexBy('block')"    title="包公式區塊"     style="padding:2px 7px;font-size:.78rem">$ $</button>
+          <span style="width:1px;align-self:stretch;background:var(--border);margin:0 3px"></span>
+          <button type="button" class="btn btn-g btn-sm" onclick="wrapSelectionTag('bold')"  title="加粗：先選取文字再點"   style="padding:2px 9px;font-size:.82rem;font-weight:800">B</button>
+          <button type="button" class="btn btn-g btn-sm" onclick="wrapSelectionTag('big')"   title="放大：先選取文字再點"   style="padding:2px 7px;font-size:.92rem">A⁺</button>
+          <button type="button" class="btn btn-g btn-sm" onclick="wrapSelectionTag('small')" title="縮小：先選取文字再點"   style="padding:2px 7px;font-size:.7rem">A⁻</button>
         </div>
 
         <div class="g2 mb3" style="gap:8px">
@@ -5663,6 +5671,31 @@ function insertLatex(snippetWithCursor) {
   const after  = el.value.slice(end);
   el.value = before + snippet + after;
   el.selectionStart = el.selectionEnd = start + cursorOffset;
+  el.focus();
+  el.dispatchEvent(new Event('input'));
+}
+
+/* 強調工具：把選取文字包成 HTML 標籤（mathHTML 顯示端已支援 <b>/<span> passthrough）。
+   先用滑鼠選取文字再點按鈕；沒選取時插入空標籤、游標停中間讓使用者直接打字。 */
+function wrapSelectionTag(kind) {
+  const id = _lastLatexFocus || 'qbe-content';
+  const el = document.getElementById(id);
+  if (!el) return;
+  let open, close;
+  if      (kind === 'bold')  { open = '<b>';  close = '</b>'; }
+  else if (kind === 'big')   { open = '<span style="font-size:1.3em">';  close = '</span>'; }
+  else if (kind === 'small') { open = '<span style="font-size:0.85em">'; close = '</span>'; }
+  else return;
+  const start = el.selectionStart || 0;
+  const end   = el.selectionEnd   || 0;
+  const sel    = el.value.slice(start, end);
+  const before = el.value.slice(0, start);
+  const after  = el.value.slice(end);
+  el.value = before + open + sel + close + after;
+  // 有選取 → 游標停整段之後；沒選取 → 停在標籤中間
+  const caret = sel ? start + open.length + sel.length + close.length
+                    : start + open.length;
+  el.selectionStart = el.selectionEnd = caret;
   el.focus();
   el.dispatchEvent(new Event('input'));
 }
