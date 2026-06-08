@@ -1160,7 +1160,7 @@ a { color: var(--indigo); }
     <div class="login-logo">
       <div class="logo-txt">EduFlow</div>
       <div class="logo-sub">智慧教學測驗系統 · 智慧學習，因材施教</div>
-      <div style="font-size:.72rem;color:var(--text-l);margin-top:6px;letter-spacing:.04em">v4.6.6</div>
+      <div style="font-size:.72rem;color:var(--text-l);margin-top:6px;letter-spacing:.04em">v4.6.7</div>
     </div>
     <div class="role-sw" id="role-sw">
       <button class="role-btn on" onclick="setRole('student',this)"><i class="fa fa-user-graduate"></i> 學生</button>
@@ -7399,11 +7399,24 @@ function assignExam(examId) {
 }
 
 async function deleteExam(examId) {
-  if (!confirm('確定要刪除此試卷？')) return;
-  await sb.from('question_set_items').delete().eq('set_id', examId);
-  await sb.from('question_sets').delete().eq('id', examId);
-  toast('已刪除', 'ok');
-  loadExamList();
+  // 先算出這份試卷底下掛了多少關聯紀錄，好讓使用者知道會一併刪掉什麼
+  const [{ count: asgn }, { count: att }] = await Promise.all([
+    sb.from('assignments').select('*', { count: 'exact', head: true }).eq('set_id', examId),
+    sb.from('attempts').select('*', { count: 'exact', head: true }).eq('set_id', examId),
+  ]);
+  const ex = [];
+  if (asgn) ex.push(`${asgn} 筆派發`);
+  if (att) ex.push(`${att} 筆學生作答`);
+  const detail = ex.length ? `\n將一併移除：${ex.join('、')}。` : '';
+  showConfirm('刪除試卷', `確定要刪除此試卷嗎？此操作不可復原。${detail}`, '確認刪除', 'btn-r', async () => {
+    // 依外鍵相依順序清理：先 attempts（answers 會連帶 CASCADE）→ assignments → 試卷本體（question_set_items 連帶 CASCADE）
+    await sb.from('attempts').delete().eq('set_id', examId);
+    await sb.from('assignments').delete().eq('set_id', examId);
+    const { error } = await sb.from('question_sets').delete().eq('id', examId);
+    if (error) { toast('刪除失敗：' + error.message, 'er'); return; }
+    toast('已刪除試卷', 'ok');
+    loadExamList();
+  }, '🗑️');
 }
 
 /* ═══════════════════════════════
@@ -8097,6 +8110,7 @@ function renderStudentTable(students) {
       <td><div class="fx g2x">
         <button class="btn btn-g btn-sm" onclick="openChangeClass('${s.id}','${s.name}')" title="變更班級"><i class="fa fa-users-rectangle"></i></button>
         <button class="btn btn-g btn-sm" onclick="openNote('${s.id}','${s.name}')"><i class="fa fa-pen"></i></button>
+        <button class="btn btn-r-s btn-sm" onclick="teacherDeleteStudent('${s.id}','${s.name}')" title="刪除學生"><i class="fa fa-trash"></i></button>
       </div></td>
     </tr>`;
   }).join('') || '<tr><td colspan="9" style="text-align:center;color:var(--text-l);padding:24px">尚無學生資料</td></tr>';
@@ -8507,10 +8521,14 @@ function adminBatchDelete(type) {
   const ids = Array.from(document.querySelectorAll(`.admin-${type}-chk:checked`)).map(cb => cb.value);
   if (!ids.length) { toast('請先勾選要刪除的帳號', 'er'); return; }
   showConfirm('批次刪除', `確定要刪除所選的 ${ids.length} 個帳號嗎？此操作不可復原。`, '確認刪除', 'btn-r', async () => {
+    let fail = 0;
     for (const id of ids) {
-      await sb.from('profiles').delete().eq('id', id);
+      await purgeProfileRelations(id);
+      const { error } = await sb.from('profiles').delete().eq('id', id);
+      if (error) fail++;
     }
-    toast(`✅ 已刪除 ${ids.length} 個帳號`, 'ok');
+    if (fail) toast(`已刪除 ${ids.length - fail} 個，${fail} 個刪除失敗`, fail === ids.length ? 'er' : 'ok');
+    else toast(`✅ 已刪除 ${ids.length} 個帳號`, 'ok');
     clearAdminSelection(type);
     if (type === 'student') loadAdminStudents();
     loadAdminDash();
@@ -9285,10 +9303,34 @@ function adminResetPassword(userId, name, birthDate) {
     }, '🔑');
 }
 
+// 刪除帳號前，先清掉所有會擋住刪除的關聯資料（這些外鍵是 NO ACTION，不清會讓刪除被擋下卻不報錯）
+// attempts 刪掉後，其底下的 answers 會由資料庫 CASCADE 連帶刪除，故不需另外處理
+async function purgeProfileRelations(uid) {
+  await sb.from('attempts').delete().eq('student_id', uid);
+  await sb.from('notifications').delete().eq('user_id', uid);
+  await sb.from('student_notes').delete().eq('student_id', uid);
+  await sb.from('student_notes').delete().eq('teacher_id', uid);
+}
+
+// 教師端：刪除單一學生（連帶清掉作答紀錄）
+async function teacherDeleteStudent(id, name) {
+  const { count } = await sb.from('attempts').select('*', { count: 'exact', head: true }).eq('student_id', id);
+  const detail = count ? `\n將一併移除 ${count} 筆作答紀錄。` : '';
+  showConfirm('刪除學生', `確定要刪除學生「${name}」嗎？此操作不可復原。${detail}`, '確認刪除', 'btn-r', async () => {
+    await purgeProfileRelations(id);
+    const { error } = await sb.from('profiles').delete().eq('id', id);
+    if (error) { toast('刪除失敗：' + error.message, 'er'); return; }
+    toast(`已刪除「${name}」`, 'ok');
+    loadTeacherStudents();
+  }, '🗑️');
+}
+
 function adminDeleteUser(userId, name) {
   showConfirm('刪除帳號', `確定要刪除「${name}」的帳號嗎？此操作不可復原。`,
     '確認刪除', 'btn-r', async () => {
-      await sb.from('profiles').delete().eq('id', userId);
+      await purgeProfileRelations(userId);
+      const { error } = await sb.from('profiles').delete().eq('id', userId);
+      if (error) { toast('刪除失敗：' + error.message, 'er'); return; }
       toast(`已刪除「${name}」`, 'ok');
       loadAdminDash();
       loadAdminStudents();
